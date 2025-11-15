@@ -68,14 +68,14 @@ export default function FeedPage() {
 	const subjects = ['all', ...Array.from(new Set(mockVideos.map(v => v.subject)))]
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+		<div className="h-screen bg-black overflow-hidden flex flex-col">
 			<TopNav
 				variant="app"
 				onCreateClick={() => setIsCreateModalOpen(true)}
 			/>
 
 			{/* Subject Filter */}
-			<div className="fixed top-[60px] left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-300 shadow-sm">
+			<div className="z-40 bg-white/95 backdrop-blur-sm border-b border-gray-300 shadow-sm flex-shrink-0">
 				<SubjectFilter
 					subjects={subjects}
 					selectedSubject={selectedSubject}
@@ -83,22 +83,27 @@ export default function FeedPage() {
 				/>
 			</div>
 
-			{/* Video Feed */}
-			<main className="pt-[120px] pb-20">
-				<div className="max-w-md mx-auto">
-					{filteredVideos.length > 0 ? (
-						<div className="space-y-4">
-							{filteredVideos.map((video) => (
-								<VideoPlayer key={video.id} video={video} />
-							))}
-						</div>
-					) : (
+			{/* Video Feed - Instagram Style */}
+			<main className="flex-1 overflow-y-scroll snap-y snap-mandatory" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+				{filteredVideos.length > 0 ? (
+					<>
+						{filteredVideos.map((video) => (
+							<div 
+								key={video.id} 
+								className="h-full snap-start snap-always flex items-center justify-center"
+							>
+								<VideoPlayer video={video} />
+							</div>
+						))}
+					</>
+				) : (
+					<div className="h-full snap-start flex items-center justify-center">
 						<div className="text-center py-20 px-4">
 							<Video className="h-16 w-16 text-indigo-300 mx-auto mb-4" />
-							<h3 className="text-xl font-semibold text-gray-900 mb-2">
+							<h3 className="text-xl font-semibold text-white mb-2">
 								No videos in {selectedSubject}
 							</h3>
-							<p className="text-gray-600 mb-6">
+							<p className="text-gray-400 mb-6">
 								Create your first video to get started!
 							</p>
 							<Button
@@ -109,8 +114,8 @@ export default function FeedPage() {
 								Create Video
 							</Button>
 						</div>
-					)}
-				</div>
+					</div>
+				)}
 			</main>
 
 			{/* Create Video Modal */}

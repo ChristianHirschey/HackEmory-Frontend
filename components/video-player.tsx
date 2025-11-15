@@ -50,9 +50,9 @@ export function VideoPlayer({ video }: VideoPlayerProps) {
   }
 
   return (
-    <div className="relative bg-gray-900 rounded-2xl overflow-hidden border border-gray-800 shadow-xl">
+    <div className="relative bg-gray-900 rounded-xl overflow-hidden shadow-2xl w-full max-w-md h-[85vh]">
       {/* Video Container with TikTok aspect ratio */}
-      <div className="relative aspect-[9/16] bg-black">
+      <div className="relative w-full h-full bg-black">
         {/* Thumbnail or Video */}
         <div className="absolute inset-0">
           <img

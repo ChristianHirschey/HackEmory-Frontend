@@ -43,4 +43,9 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
+  
+  /* Hide scrollbar for Instagram-style feed */
+  .snap-y::-webkit-scrollbar {
+    display: none;
+  }
 }
