@@ -7,11 +7,12 @@ import { Button } from '@/components/ui/button'
 interface Video {
   id: string
   title: string
-  subject: string
-  videoUrl: string
-  thumbnail: string
-  character: string
-  duration: string
+  description: string
+  presigned_url: string
+  subject?: string
+  thumbnail?: string
+  character?: string
+  duration?: string
 }
 
 interface VideoPlayerProps {
@@ -53,22 +54,24 @@ export function VideoPlayer({ video }: VideoPlayerProps) {
     <div className="relative bg-gray-900 rounded-xl overflow-hidden shadow-2xl w-full max-w-md h-[85vh]">
       {/* Video Container with TikTok aspect ratio */}
       <div className="relative w-full h-full bg-black">
-        {/* Thumbnail or Video */}
-        <div className="absolute inset-0">
-          <img
-            src={video.thumbnail || "/placeholder.svg"}
-            alt={video.title}
-            className="w-full h-full object-cover"
-          />
-        </div>
+        {/* Video Element */}
+        <video
+          ref={videoRef}
+          src={video.presigned_url}
+          poster={video.thumbnail || "/placeholder.svg"}
+          className="w-full h-full object-cover"
+          loop
+          playsInline
+          onClick={togglePlay}
+        />
 
         {/* Play/Pause Overlay */}
         <button
           onClick={togglePlay}
-          className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-colors"
+          className="absolute inset-0 flex items-center justify-center bg-transparent hover:bg-black/10 transition-colors"
         >
           {!isPlaying && (
-            <div className="h-20 w-20 bg-white/90 rounded-full flex items-center justify-center">
+            <div className="h-20 w-20 bg-white/90 rounded-full flex items-center justify-center shadow-xl">
               <Play className="h-10 w-10 text-gray-900 ml-1" />
             </div>
           )}
@@ -81,15 +84,28 @@ export function VideoPlayer({ video }: VideoPlayerProps) {
             <h3 className="font-semibold text-lg text-white text-balance leading-tight">
               {video.title}
             </h3>
-            <div className="flex items-center gap-2 text-sm text-gray-300">
-              <span className="bg-indigo-600 px-2 py-0.5 rounded-full text-xs font-medium">
-                {video.subject}
-              </span>
-              <span>•</span>
-              <span>Voiced by {video.character}</span>
-              <span>•</span>
-              <span>{video.duration}</span>
-            </div>
+            <p className="text-sm text-gray-300 line-clamp-2">
+              {video.description}
+            </p>
+            {(video.subject || video.character || video.duration) && (
+              <div className="flex items-center gap-2 text-sm text-gray-300">
+                {video.subject && (
+                  <>
+                    <span className="bg-indigo-600 px-2 py-0.5 rounded-full text-xs font-medium">
+                      {video.subject}
+                    </span>
+                    <span>•</span>
+                  </>
+                )}
+                {video.character && (
+                  <>
+                    <span>Voiced by {video.character}</span>
+                    {video.duration && <span>•</span>}
+                  </>
+                )}
+                {video.duration && <span>{video.duration}</span>}
+              </div>
+            )}
           </div>
 
           {/* Control Buttons */}
