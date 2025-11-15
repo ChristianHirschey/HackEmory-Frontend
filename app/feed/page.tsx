@@ -2,8 +2,7 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Video, Plus, Home, User, LogOut } from 'lucide-react'
-import Link from 'next/link'
+import { Video, Plus } from 'lucide-react'
 import { VideoPlayer } from '@/components/video-player'
 import { SubjectFilter } from '@/components/subject-filter'
 import { CreateVideoModal } from '@/components/create-video-modal'
@@ -61,7 +60,6 @@ const mockVideos = [
 export default function FeedPage() {
 	const [selectedSubject, setSelectedSubject] = useState<string>('all')
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-	const [showProfileMenu, setShowProfileMenu] = useState(false)
 
 	const filteredVideos = selectedSubject === 'all'
 		? mockVideos
@@ -70,9 +68,14 @@ export default function FeedPage() {
 	const subjects = ['all', ...Array.from(new Set(mockVideos.map(v => v.subject)))]
 
 	return (
-		<div className="min-h-screen bg-gray-950 text-white">
-			<TopNav variant="app" />
-			<div className="fixed top-[60px] left-0 right-0 z-40 bg-gray-900/80 backdrop-blur-md border-b border-gray-800">
+		<div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+			<TopNav
+				variant="app"
+				onCreateClick={() => setIsCreateModalOpen(true)}
+			/>
+
+			{/* Subject Filter */}
+			<div className="fixed top-[60px] left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-300 shadow-sm">
 				<SubjectFilter
 					subjects={subjects}
 					selectedSubject={selectedSubject}
@@ -91,11 +94,11 @@ export default function FeedPage() {
 						</div>
 					) : (
 						<div className="text-center py-20 px-4">
-							<Video className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-							<h3 className="text-xl font-semibold text-gray-300 mb-2">
+							<Video className="h-16 w-16 text-indigo-300 mx-auto mb-4" />
+							<h3 className="text-xl font-semibold text-gray-900 mb-2">
 								No videos in {selectedSubject}
 							</h3>
-							<p className="text-gray-500 mb-6">
+							<p className="text-gray-600 mb-6">
 								Create your first video to get started!
 							</p>
 							<Button

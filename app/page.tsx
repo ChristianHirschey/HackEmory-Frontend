@@ -99,10 +99,10 @@ export default function LandingPage() {
 					<div className="flex flex-col md:flex-row items-center justify-between gap-4">
 						<div className="flex items-center gap-2">
 							<Video className="h-6 w-6 text-indigo-600" />
-							<span className="text-lg font-bold text-indigo-600">StudySnap</span>
+							<span className="text-lg font-bold text-indigo-600">EduRot</span>
 						</div>
 						<p className="text-gray-600 text-sm">
-							© 2025 StudySnap. AI-powered learning for everyone.
+							© 2025 EduRot. AI-powered learning for everyone.
 						</p>
 					</div>
 				</div>
