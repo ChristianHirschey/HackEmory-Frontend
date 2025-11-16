@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
 import { Play, Pause, Volume2, VolumeX, Maximize } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -17,12 +17,49 @@ interface Video {
 
 interface VideoPlayerProps {
   video: Video
+  isVisible?: boolean
+  shouldBeMuted?: boolean
 }
 
-export function VideoPlayer({ video }: VideoPlayerProps) {
+export interface VideoPlayerRef {
+  play: () => void
+  pause: () => void
+  getVideoElement: () => HTMLVideoElement | null
+}
+
+export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ video, isVisible = false, shouldBeMuted = true }, ref) => {
   const [isPlaying, setIsPlaying] = useState(false)
-  const [isMuted, setIsMuted] = useState(false)
+  const [isMuted, setIsMuted] = useState(false) // Start unmuted
   const videoRef = useRef<HTMLVideoElement>(null)
+  const playPromiseRef = useRef<Promise<void> | null>(null)
+  const prevIsVisible = useRef<boolean | null>(null)
+  const hasStarted = useRef(false)
+
+  // Expose play/pause methods to parent
+  useImperativeHandle(ref, () => ({
+    play: () => {
+      if (videoRef.current && !isPlaying) {
+        videoRef.current.play()
+        setIsPlaying(true)
+      }
+    },
+    pause: () => {
+      if (videoRef.current && isPlaying) {
+        videoRef.current.pause()
+        setIsPlaying(false)
+      }
+    },
+    getVideoElement: () => videoRef.current
+  }))
+
+  // Simple cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (videoRef.current) {
+        videoRef.current.pause()
+      }
+    }
+  }, [])
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -37,8 +74,9 @@ export function VideoPlayer({ video }: VideoPlayerProps) {
 
   const toggleMute = () => {
     if (videoRef.current) {
-      videoRef.current.muted = !isMuted
-      setIsMuted(!isMuted)
+      const newMutedState = !isMuted
+      videoRef.current.muted = newMutedState
+      setIsMuted(newMutedState)
     }
   }
 
@@ -57,11 +95,13 @@ export function VideoPlayer({ video }: VideoPlayerProps) {
         {/* Video Element */}
         <video
           ref={videoRef}
+          id={`video-${video.id}`}
           src={video.presigned_url}
           poster={video.thumbnail || "/placeholder.svg"}
           className="w-full h-full object-cover"
           loop
           playsInline
+          preload="metadata"
           onClick={togglePlay}
         />
 
@@ -149,4 +189,7 @@ export function VideoPlayer({ video }: VideoPlayerProps) {
       </div>
     </div>
   )
-}
+})
+
+VideoPlayer.displayName = 'VideoPlayer'
+

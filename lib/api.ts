@@ -29,3 +29,8 @@ export async function fetchVideos(start: number = 0): Promise<VideosListResponse
   return response.json()
 }
 
+// Infinite query compatible fetch function
+export async function fetchVideosPage({ pageParam = 0 }: { pageParam?: number }) {
+  return fetchVideos(pageParam)
+}
+

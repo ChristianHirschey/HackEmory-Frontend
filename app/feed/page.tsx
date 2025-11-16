@@ -1,13 +1,14 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Video, Plus, Loader2 } from 'lucide-react'
 import { VideoPlayer } from '@/components/video-player'
 import { SubjectFilter } from '@/components/subject-filter'
 import { CreateVideoModal } from '@/components/create-video-modal'
 import { TopNav } from '@/components/TopNavBar'
-import { fetchVideos, VideoResponse } from '@/lib/api'
+import { fetchVideosPage, VideoResponse } from '@/lib/api'
 
 interface VideoWithMetadata extends VideoResponse {
 	subject?: string
@@ -17,73 +18,59 @@ interface VideoWithMetadata extends VideoResponse {
 }
 
 export default function FeedPage() {
-	const [videos, setVideos] = useState<VideoWithMetadata[]>([])
 	const [selectedSubject, setSelectedSubject] = useState<string>('all')
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-	const [isLoading, setIsLoading] = useState(true)
-	const [isLoadingMore, setIsLoadingMore] = useState(false)
-	const [error, setError] = useState<string | null>(null)
-	const [hasMore, setHasMore] = useState(true)
 	const scrollRef = useRef<HTMLDivElement>(null)
 
-	// Load initial videos
-	useEffect(() => {
-		loadVideos(0)
-	}, [])
-
-	const loadVideos = async (start: number) => {
-		try {
-			if (start === 0) {
-				setIsLoading(true)
-			} else {
-				setIsLoadingMore(true)
+	// Infinite query for videos
+	const {
+		data,
+		error,
+		fetchNextPage,
+		hasNextPage,
+		isFetching,
+		isFetchingNextPage,
+		status,
+	} = useInfiniteQuery({
+		queryKey: ['videos'],
+		queryFn: fetchVideosPage,
+		initialPageParam: 0,
+		getNextPageParam: (lastPage: { start: number; count: number; videos: VideoResponse[] }) => {
+			// If we got 5 videos, there might be more. Next page starts after current videos
+			if (lastPage.count === 5) {
+				return lastPage.start + lastPage.count
 			}
-			setError(null)
+			return undefined // No more pages
+		},
+	})
 
-			const response = await fetchVideos(start)
-			
-			if (start === 0) {
-				setVideos(response.videos)
-			} else {
-				setVideos(prev => [...prev, ...response.videos])
-			}
-
-			// If we got fewer than 5 videos, we've reached the end
-			setHasMore(response.count === 5)
-		} catch (err) {
-			setError(err instanceof Error ? err.message : 'Failed to load videos')
-		} finally {
-			setIsLoading(false)
-			setIsLoadingMore(false)
-		}
-	}
-
-	// Infinite scroll handler
-	const handleScroll = useCallback(() => {
-		if (!scrollRef.current || isLoadingMore || !hasMore) return
-
-		const { scrollTop, scrollHeight, clientHeight } = scrollRef.current
-		
-		// Load more when we're near the bottom (within 2 screen heights)
-		if (scrollHeight - scrollTop <= clientHeight * 3) {
-			loadVideos(videos.length)
-		}
-	}, [isLoadingMore, hasMore, videos.length])
-
-	// Attach scroll listener
-	useEffect(() => {
-		const scrollElement = scrollRef.current
-		if (!scrollElement) return
-
-		scrollElement.addEventListener('scroll', handleScroll)
-		return () => scrollElement.removeEventListener('scroll', handleScroll)
-	}, [handleScroll])
+	// Flatten all pages into a single videos array
+	const videos: VideoWithMetadata[] = data?.pages.flatMap((page: { videos: VideoResponse[] }) => page.videos) ?? []
 
 	const filteredVideos = selectedSubject === 'all'
 		? videos
 		: videos.filter(v => v.subject === selectedSubject)
 
 	const subjects = ['all', ...Array.from(new Set(videos.map(v => v.subject).filter((s): s is string => Boolean(s))))]
+
+	// Infinite scroll handler - load more when scrolling near bottom
+	useEffect(() => {
+		const scrollElement = scrollRef.current
+		if (!scrollElement) return
+
+		const handleScroll = () => {
+			const { scrollTop, scrollHeight, clientHeight } = scrollElement
+			
+			// Load more when we're within 2 screen heights of the bottom
+			if (scrollHeight - scrollTop <= clientHeight * 3 && hasNextPage && !isFetching) {
+				console.log('🔄 Loading more videos...')
+				fetchNextPage()
+			}
+		}
+
+		scrollElement.addEventListener('scroll', handleScroll)
+		return () => scrollElement.removeEventListener('scroll', handleScroll)
+	}, [hasNextPage, isFetching, fetchNextPage])
 
 	return (
 		<div className="h-screen bg-black overflow-hidden flex flex-col">
@@ -109,23 +96,23 @@ export default function FeedPage() {
 				className="flex-1 overflow-y-scroll snap-y snap-mandatory" 
 				style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
 			>
-				{isLoading ? (
+				{status === 'pending' ? (
 					<div className="h-full flex items-center justify-center">
 						<div className="text-center">
 							<Loader2 className="h-12 w-12 text-indigo-500 animate-spin mx-auto mb-4" />
 							<p className="text-white text-lg">Loading videos...</p>
 						</div>
 					</div>
-				) : error ? (
+				) : status === 'error' ? (
 					<div className="h-full flex items-center justify-center">
 						<div className="text-center py-20 px-4">
 							<Video className="h-16 w-16 text-red-400 mx-auto mb-4" />
 							<h3 className="text-xl font-semibold text-white mb-2">
 								Failed to load videos
 							</h3>
-							<p className="text-gray-400 mb-6">{error}</p>
+							<p className="text-gray-400 mb-6">{error?.message}</p>
 							<Button
-								onClick={() => loadVideos(0)}
+								onClick={() => window.location.reload()}
 								className="bg-indigo-600 hover:bg-indigo-700 text-white"
 							>
 								Try Again
@@ -136,15 +123,15 @@ export default function FeedPage() {
 					<>
 						{filteredVideos.map((video) => (
 							<div 
-								key={video.id} 
+								key={video.id}
 								className="h-full snap-start snap-always flex items-center justify-center"
 							>
 								<VideoPlayer video={video} />
 							</div>
 						))}
-						{isLoadingMore && (
-							<div className="h-32 flex items-center justify-center">
-								<Loader2 className="h-8 w-8 text-indigo-500 animate-spin" />
+						{isFetchingNextPage && (
+							<div className="h-full snap-start flex items-center justify-center">
+								<Loader2 className="h-12 w-12 text-indigo-500 animate-spin" />
 							</div>
 						)}
 					</>
