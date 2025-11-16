@@ -4,7 +4,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Video, Plus, Home, User, LogOut } from 'lucide-react'
+import { Video, Plus, Home, User, LogOut, Grid } from 'lucide-react'
 
 interface TopNavProps {
 	variant?: 'landing' | 'app' | 'login'
@@ -67,6 +67,16 @@ export function TopNav({ variant = 'landing', onCreateClick }: TopNavProps) {
 				</Link>
 
 				<div className="flex items-center gap-3">
+					<Link href="/explore">
+						<Button
+							size="sm"
+							className="bg-purple-600 hover:bg-purple-700 text-white gap-2"
+						>
+							<Grid className="h-4 w-4" />
+							Explore
+						</Button>
+					</Link>
+
 					{onCreateClick && (
 						<Button
 							onClick={onCreateClick}

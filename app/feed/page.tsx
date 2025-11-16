@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Video as VideoIcon, Plus, Loader2 } from 'lucide-react'
 import { VideoPlayer, VideoPlayerRef } from '@/components/video-player'
@@ -19,12 +20,31 @@ interface VideoWithMetadata extends VideoResponse {
 }
 
 export default function FeedPage() {
+	const searchParams = useSearchParams()
+	const collectionParam = searchParams.get('collection')
+	
 	const [selectedSubject, setSelectedSubject] = useState<string>('all')
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-	const [selectedCollectionId, setSelectedCollectionId] = useState<number | null>(null)
+	const [selectedCollectionId, setSelectedCollectionId] = useState<number | null>(
+		collectionParam ? parseInt(collectionParam, 10) : null
+	)
 
 	// Scroll container ref (the vertical feed)
 	const scrollRef = useRef<HTMLDivElement>(null)
+	
+	// Update selected collection when URL param changes
+	useEffect(() => {
+		if (collectionParam) {
+			const collectionId = parseInt(collectionParam, 10)
+			if (!isNaN(collectionId)) {
+				setSelectedCollectionId(collectionId)
+				setActiveIndex(0)
+				if (scrollRef.current) {
+					scrollRef.current.scrollTop = 0
+				}
+			}
+		}
+	}, [collectionParam])
 
 	// Which video is currently most visible
 	const [activeIndex, setActiveIndex] = useState(0)
