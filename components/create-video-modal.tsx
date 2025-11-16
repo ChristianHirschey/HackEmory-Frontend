@@ -5,7 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Upload, LinkIcon, Sparkles } from 'lucide-react'
+import { Textarea } from '@/components/ui/textarea'
+import { Upload, LinkIcon, Sparkles, FileText } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 interface CreateVideoModalProps {
@@ -15,6 +16,7 @@ interface CreateVideoModalProps {
 
 export function CreateVideoModal({ isOpen, onClose }: CreateVideoModalProps) {
 	const [youtubeUrl, setYoutubeUrl] = useState('')
+	const [textContent, setTextContent] = useState('')
 	const [file, setFile] = useState<File | null>(null)
 	const [loading, setLoading] = useState(false)
 	const [activeTab, setActiveTab] = useState('youtube')
@@ -28,9 +30,9 @@ export function CreateVideoModal({ isOpen, onClose }: CreateVideoModalProps) {
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
 
-		// Validate that we have either a URL or file
-		if (!youtubeUrl && !file) {
-			alert('Please provide a YouTube URL or upload a file')
+		// Validate that we have either a URL, text, or file
+		if (!youtubeUrl && !textContent && !file) {
+			alert('Please provide a YouTube URL, text content, or upload a file')
 			return
 		}
 
@@ -48,6 +50,9 @@ export function CreateVideoModal({ isOpen, onClose }: CreateVideoModalProps) {
 			if (activeTab === 'youtube' && youtubeUrl) {
 				// For YouTube, send as 'content'
 				formData.append('content', youtubeUrl)
+			} else if (activeTab === 'text' && textContent) {
+				// For text, send as 'content'
+				formData.append('content', textContent)
 			} else if (activeTab === 'upload' && file) {
 				// For file upload, send as 'file'
 				formData.append('file', file)
@@ -69,9 +74,11 @@ export function CreateVideoModal({ isOpen, onClose }: CreateVideoModalProps) {
 			console.log('✓ Video generation started:', data)
 			console.log(`✓ Generated ${data.count} videos`)
 
+			// Reset form
 			setYoutubeUrl('')
+			setTextContent('')
 			setFile(null)
-			onCreated()
+			alert(`Successfully generated ${data.count} video(s)!`)
 			onClose()
 		} catch (error) {
 			console.error('Error generating video:', error)
@@ -84,8 +91,8 @@ export function CreateVideoModal({ isOpen, onClose }: CreateVideoModalProps) {
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onClose}>
-			<DialogContent className="sm:max-w-[500px] bg-gray-900 border-gray-800 text-white">
-				<DialogHeader>
+			<DialogContent className="sm:max-w-[500px] max-h-[90vh] bg-gray-900 border-gray-800 text-white overflow-hidden flex flex-col">
+				<DialogHeader className="flex-shrink-0">
 					<DialogTitle className="text-2xl font-bold flex items-center gap-2">
 						<Sparkles className="h-6 w-6 text-indigo-500" />
 						Generate Video
@@ -95,19 +102,23 @@ export function CreateVideoModal({ isOpen, onClose }: CreateVideoModalProps) {
 					</DialogDescription>
 				</DialogHeader>
 
-				<form onSubmit={handleSubmit} className="space-y-6 mt-4">
+				<form onSubmit={handleSubmit} className="space-y-6 mt-4 overflow-y-auto flex-1 pr-2 pb-4">
 					{/* Content Source */}
 					<div className="space-y-2">
 						<Label className="text-white">Source</Label>
 						<Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-							<TabsList className="grid w-full grid-cols-2 bg-gray-800">
+							<TabsList className="grid w-full grid-cols-3 bg-gray-800">
 								<TabsTrigger value="youtube" className="data-[state=active]:bg-indigo-600">
 									<LinkIcon className="h-4 w-4 mr-2" />
-									YouTube URL
+									YouTube
+								</TabsTrigger>
+								<TabsTrigger value="text" className="data-[state=active]:bg-indigo-600">
+									<FileText className="h-4 w-4 mr-2" />
+									Text
 								</TabsTrigger>
 								<TabsTrigger value="upload" className="data-[state=active]:bg-indigo-600">
 									<Upload className="h-4 w-4 mr-2" />
-									Upload File
+									Upload
 								</TabsTrigger>
 							</TabsList>
 
@@ -123,13 +134,25 @@ export function CreateVideoModal({ isOpen, onClose }: CreateVideoModalProps) {
 								</p>
 							</TabsContent>
 
+							<TabsContent value="text" className="space-y-3 mt-4">
+								<Textarea
+									placeholder="Enter your text content here..."
+									value={textContent}
+									onChange={(e) => setTextContent(e.target.value)}
+									className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 min-h-[200px] resize-none"
+								/>
+								<p className="text-sm text-gray-400">
+									Paste or type text to generate a video
+								</p>
+							</TabsContent>
+
 							<TabsContent value="upload" className="space-y-3 mt-4">
 								<div className="border-2 border-dashed border-gray-700 rounded-lg p-8 text-center hover:border-indigo-500 transition-colors cursor-pointer">
 									<input
 										type="file"
 										id="file-upload"
 										onChange={handleFileChange}
-										accept=".mp4,.mov,.avi,.pdf,.txt,.doc,.docx"
+										accept=".mp4,.mov,.avi,.pdf,.txt,.doc,.docx,.mp3"
 										className="hidden"
 									/>
 									<label htmlFor="file-upload" className="cursor-pointer">
@@ -145,7 +168,7 @@ export function CreateVideoModal({ isOpen, onClose }: CreateVideoModalProps) {
 											<div>
 												<p className="text-white font-medium">Click to upload</p>
 												<p className="text-sm text-gray-400 mt-1">
-													Video, PDF, or text file
+													Audio, video, PDF, or text file
 												</p>
 											</div>
 										)}
@@ -155,36 +178,37 @@ export function CreateVideoModal({ isOpen, onClose }: CreateVideoModalProps) {
 						</Tabs>
 					</div>
 
-					{/* Actions */}
-					<div className="flex gap-3 pt-4">
-						<Button
-							type="button"
-							variant="outline"
-							onClick={onClose}
-							className="flex-1 border-gray-700 text-gray-300 hover:bg-gray-800"
-							disabled={loading}
-						>
-							Cancel
-						</Button>
-						<Button
-							type="submit"
-							className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
-							disabled={loading}
-						>
-							{loading ? (
-								<span className="flex items-center gap-2">
-									<span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-									Generating...
-								</span>
-							) : (
-								<span className="flex items-center gap-2">
-									<Sparkles className="h-4 w-4" />
-									Generate Video
-								</span>
-							)}
-						</Button>
-					</div>
 				</form>
+				
+				{/* Actions - Fixed at bottom */}
+				<div className="flex gap-3 pt-4 border-t border-gray-800 mt-4 flex-shrink-0">
+					<Button
+						type="button"
+						variant="outline"
+						onClick={onClose}
+						className="flex-1 border-gray-700 text-gray-300 hover:bg-gray-800"
+						disabled={loading}
+					>
+						Cancel
+					</Button>
+					<Button
+						onClick={handleSubmit}
+						className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+						disabled={loading}
+					>
+						{loading ? (
+							<span className="flex items-center gap-2">
+								<span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+								Generating...
+							</span>
+						) : (
+							<span className="flex items-center gap-2">
+								<Sparkles className="h-4 w-4" />
+								Generate Video
+							</span>
+						)}
+					</Button>
+				</div>
 			</DialogContent>
 		</Dialog>
 	)
