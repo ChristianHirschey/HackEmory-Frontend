@@ -1,14 +1,15 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Video as VideoIcon, Plus, Loader2 } from 'lucide-react'
 import { VideoPlayer, VideoPlayerRef } from '@/components/video-player'
 import { SubjectFilter } from '@/components/subject-filter'
 import { CreateVideoModal } from '@/components/create-video-modal'
 import { TopNav } from '@/components/TopNavBar'
-import { fetchVideosPage, VideoResponse } from '@/lib/api'
+import { CollectionsSidebar } from '@/components/collections-sidebar'
+import { fetchVideosPage, fetchCollectionDetails, VideoResponse } from '@/lib/api'
 
 interface VideoWithMetadata extends VideoResponse {
 	subject?: string
@@ -20,6 +21,7 @@ interface VideoWithMetadata extends VideoResponse {
 export default function FeedPage() {
 	const [selectedSubject, setSelectedSubject] = useState<string>('all')
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+	const [selectedCollectionId, setSelectedCollectionId] = useState<number | null>(null)
 
 	// Scroll container ref (the vertical feed)
 	const scrollRef = useRef<HTMLDivElement>(null)
@@ -33,15 +35,15 @@ export default function FeedPage() {
 	// Refs for each video container div (used for IntersectionObserver)
 	const videoContainersRef = useRef<(HTMLDivElement | null)[]>([])
 
-	// Infinite query for videos
+	// Infinite query for all videos (when no collection selected)
 	const {
-		data,
-		error,
+		data: allVideosData,
+		error: allVideosError,
 		fetchNextPage,
 		hasNextPage,
-		isFetching,
+		isFetching: isFetchingAllVideos,
 		isFetchingNextPage,
-		status,
+		status: allVideosStatus,
 	} = useInfiniteQuery({
 		queryKey: ['videos'],
 		queryFn: fetchVideosPage,
@@ -53,11 +55,30 @@ export default function FeedPage() {
 			}
 			return undefined // No more pages
 		},
+		enabled: selectedCollectionId === null, // Only fetch when no collection is selected
 	})
 
-	// Flatten all pages into a single videos array
+	// Query for collection videos (when a collection is selected)
+	const {
+		data: collectionData,
+		error: collectionError,
+		status: collectionStatus,
+		isFetching: isFetchingCollection,
+	} = useQuery({
+		queryKey: ['collection', selectedCollectionId],
+		queryFn: () => fetchCollectionDetails(selectedCollectionId!),
+		enabled: selectedCollectionId !== null,
+	})
+
+	// Determine which videos to show
 	const videos: VideoWithMetadata[] =
-		data?.pages.flatMap((page: { videos: VideoResponse[] }) => page.videos) ?? []
+		selectedCollectionId === null
+			? (allVideosData?.pages.flatMap((page: { videos: VideoResponse[] }) => page.videos) ?? [])
+			: (collectionData?.videos ?? [])
+
+	const isFetching = selectedCollectionId === null ? isFetchingAllVideos : isFetchingCollection
+	const error = selectedCollectionId === null ? allVideosError : collectionError
+	const status = selectedCollectionId === null ? allVideosStatus : collectionStatus
 
 	const filteredVideos =
 		selectedSubject === 'all'
@@ -71,8 +92,11 @@ export default function FeedPage() {
 		),
 	]
 
-	// Infinite scroll handler - load more when scrolling near bottom
+	// Infinite scroll handler - load more when scrolling near bottom (only for all videos)
 	useEffect(() => {
+		// Only enable infinite scroll when viewing all videos (not a collection)
+		if (selectedCollectionId !== null) return
+
 		const scrollElement = scrollRef.current
 		if (!scrollElement) return
 
@@ -87,7 +111,7 @@ export default function FeedPage() {
 
 		scrollElement.addEventListener('scroll', handleScroll)
 		return () => scrollElement.removeEventListener('scroll', handleScroll)
-	}, [hasNextPage, isFetching, fetchNextPage])
+	}, [hasNextPage, isFetching, fetchNextPage, selectedCollectionId])
 
 	// IntersectionObserver to detect which video is most visible
 	useEffect(() => {
@@ -132,23 +156,48 @@ export default function FeedPage() {
 		<div className="h-screen bg-black overflow-hidden flex flex-col">
 			<TopNav variant="app" onCreateClick={() => setIsCreateModalOpen(true)} />
 
-			{/* Subject Filter */}
-			{videos.length > 0 && (
-				<div className="z-40 bg-white/95 backdrop-blur-sm border-b border-gray-300 shadow-sm shrink-0">
-					<SubjectFilter
-						subjects={subjects}
-						selectedSubject={selectedSubject}
-						onSelectSubject={setSelectedSubject}
-					/>
-				</div>
-			)}
+			<div className="flex-1 flex overflow-hidden">
+				{/* Collections Sidebar */}
+				<CollectionsSidebar
+					onCollectionSelect={(collectionId) => {
+						setSelectedCollectionId(collectionId)
+						setActiveIndex(0) // Reset to first video when switching
+						// Scroll to top
+						if (scrollRef.current) {
+							scrollRef.current.scrollTop = 0
+						}
+					}}
+					selectedCollectionId={selectedCollectionId}
+				/>
 
-			{/* Video Feed - TikTok / Instagram Reels style */}
-			<main
-				ref={scrollRef}
-				className="flex-1 overflow-y-scroll snap-y snap-mandatory"
-				style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-			>
+				{/* Main Content Area */}
+				<div className="flex-1 flex flex-col overflow-hidden">
+					{/* Collection/Subject Filter Bar */}
+					<div className="shrink-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
+						{selectedCollectionId !== null ? (
+							<div className="px-6 py-4">
+								<h2 className="text-lg font-semibold text-white">
+									{collectionData?.title || 'Collection'}
+								</h2>
+								<p className="text-sm text-gray-400">
+									{collectionData?.video_count || 0} videos
+								</p>
+							</div>
+						) : videos.length > 0 ? (
+							<SubjectFilter
+								subjects={subjects}
+								selectedSubject={selectedSubject}
+								onSelectSubject={setSelectedSubject}
+							/>
+						) : null}
+					</div>
+
+					{/* Video Feed - TikTok / Instagram Reels style */}
+					<main
+						ref={scrollRef}
+						className="flex-1 overflow-y-scroll snap-y snap-mandatory"
+						style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+					>
 				{status === 'pending' ? (
 					<div className="h-full flex items-center justify-center">
 						<div className="text-center">
@@ -223,7 +272,9 @@ export default function FeedPage() {
 						</div>
 					</div>
 				)}
-			</main>
+					</main>
+				</div>
+			</div>
 
 			{/* Create Video Modal */}
 			<CreateVideoModal
