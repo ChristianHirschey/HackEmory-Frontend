@@ -48,10 +48,17 @@ export default function FeedPage() {
 		queryKey: ['videos'],
 		queryFn: fetchVideosPage,
 		initialPageParam: 0,
-		getNextPageParam: (lastPage: { start: number; count: number; videos: VideoResponse[] }) => {
-			// If we got 5 videos, there might be more. Next page starts after current videos
-			if (lastPage.count === 5) {
-				return lastPage.start + lastPage.count
+		getNextPageParam: (lastPage: {
+			collection_offset: number
+			collection_limit: number
+			total_collections: number
+			returned_video_count: number
+			videos: VideoResponse[]
+		}) => {
+			// Check if there are more collections to fetch
+			const nextOffset = lastPage.collection_offset + lastPage.collection_limit
+			if (nextOffset < lastPage.total_collections) {
+				return nextOffset
 			}
 			return undefined // No more pages
 		},
@@ -105,6 +112,7 @@ export default function FeedPage() {
 
 			// Load more when we're within 3 screen heights of the bottom
 			if (scrollHeight - scrollTop <= clientHeight * 3 && hasNextPage && !isFetching) {
+				console.log('🔄 Loading more collections...')
 				fetchNextPage()
 			}
 		}
@@ -112,6 +120,18 @@ export default function FeedPage() {
 		scrollElement.addEventListener('scroll', handleScroll)
 		return () => scrollElement.removeEventListener('scroll', handleScroll)
 	}, [hasNextPage, isFetching, fetchNextPage, selectedCollectionId])
+
+	// Log collection data for debugging
+	useEffect(() => {
+		if (allVideosData) {
+			const totalVideos = videos.length
+			const lastPage = allVideosData.pages[allVideosData.pages.length - 1]
+			console.log(
+				`📚 Loaded ${allVideosData.pages.length} collection groups, ${totalVideos} total videos. ` +
+					`(${lastPage.collection_offset + lastPage.collection_limit}/${lastPage.total_collections} collections fetched)`
+			)
+		}
+	}, [allVideosData, videos.length])
 
 	// IntersectionObserver to detect which video is most visible
 	useEffect(() => {

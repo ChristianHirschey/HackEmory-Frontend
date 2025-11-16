@@ -10,8 +10,10 @@ export interface VideoResponse {
 }
 
 export interface VideosListResponse {
-  start: number
-  count: number
+  collection_offset: number
+  collection_limit: number
+  total_collections: number
+  returned_video_count: number
   videos: VideoResponse[]
 }
 
@@ -31,14 +33,20 @@ export interface CollectionDetails {
   videos: VideoResponse[]
 }
 
-export async function fetchVideos(start: number = 0): Promise<VideosListResponse> {
-  const response = await fetch(`${API_BASE_URL}/videos?start=${start}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'include', // Include cookies for authentication
-  })
+export async function fetchVideos(
+  collectionOffset: number = 0,
+  collectionLimit: number = 1
+): Promise<VideosListResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/videos?collection_offset=${collectionOffset}&collection_limit=${collectionLimit}`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include', // Include cookies for authentication
+    }
+  )
 
   if (!response.ok) {
     throw new Error(`Failed to fetch videos: ${response.statusText}`)
@@ -49,7 +57,8 @@ export async function fetchVideos(start: number = 0): Promise<VideosListResponse
 
 // Infinite query compatible fetch function
 export async function fetchVideosPage({ pageParam = 0 }: { pageParam?: number }) {
-  return fetchVideos(pageParam)
+  // Fetch 2 collections at a time for better UX
+  return fetchVideos(pageParam, 2)
 }
 
 export async function fetchCollections(): Promise<CollectionsResponse> {
