@@ -9,7 +9,6 @@ import { VideoPlayer, VideoPlayerRef } from '@/components/video-player'
 import { SubjectFilter } from '@/components/subject-filter'
 import { CreateVideoModal } from '@/components/create-video-modal'
 import { TopNav } from '@/components/TopNavBar'
-import { CollectionsSidebar } from '@/components/collections-sidebar'
 import { fetchVideosPage, fetchCollectionDetails, VideoResponse } from '@/lib/api'
 
 interface VideoWithMetadata extends VideoResponse {
@@ -196,48 +195,32 @@ export default function FeedPage() {
 		<div className="h-screen bg-black overflow-hidden flex flex-col">
 			<TopNav variant="app" onCreateClick={() => setIsCreateModalOpen(true)} />
 
-			<div className="flex-1 flex overflow-hidden">
-				{/* Collections Sidebar */}
-				<CollectionsSidebar
-					onCollectionSelect={(collectionId) => {
-						setSelectedCollectionId(collectionId)
-						setActiveIndex(0) // Reset to first video when switching
-						// Scroll to top
-						if (scrollRef.current) {
-							scrollRef.current.scrollTop = 0
-						}
-					}}
-					selectedCollectionId={selectedCollectionId}
-				/>
-
-				{/* Main Content Area */}
-				<div className="flex-1 flex flex-col overflow-hidden">
-					{/* Collection/Subject Filter Bar */}
-					<div className="shrink-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
-						{selectedCollectionId !== null ? (
-							<div className="px-6 py-4">
-								<h2 className="text-lg font-semibold text-white">
-									{collectionData?.title || 'Collection'}
-								</h2>
-								<p className="text-sm text-gray-400">
-									{collectionData?.video_count || 0} videos
-								</p>
-							</div>
-						) : videos.length > 0 ? (
-							<SubjectFilter
-								subjects={subjects}
-								selectedSubject={selectedSubject}
-								onSelectSubject={setSelectedSubject}
-							/>
-						) : null}
+			{/* Collection/Subject Filter Bar */}
+			<div className="shrink-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
+				{selectedCollectionId !== null ? (
+					<div className="px-6 py-4">
+						<h2 className="text-lg font-semibold text-white">
+							{collectionData?.title || 'Collection'}
+						</h2>
+						<p className="text-sm text-gray-400">
+							{collectionData?.video_count || 0} videos
+						</p>
 					</div>
+				) : videos.length > 0 ? (
+					<SubjectFilter
+						subjects={subjects}
+						selectedSubject={selectedSubject}
+						onSelectSubject={setSelectedSubject}
+					/>
+				) : null}
+			</div>
 
-					{/* Video Feed - TikTok / Instagram Reels style */}
-					<main
-						ref={scrollRef}
-						className="flex-1 overflow-y-scroll snap-y snap-mandatory"
-						style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-					>
+			{/* Video Feed - TikTok / Instagram Reels style */}
+			<main
+				ref={scrollRef}
+				className="flex-1 overflow-y-scroll snap-y snap-mandatory"
+				style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+			>
 				{status === 'pending' ? (
 					<div className="h-full flex items-center justify-center">
 						<div className="text-center">
@@ -311,10 +294,8 @@ export default function FeedPage() {
 							</Button>
 						</div>
 					</div>
-				)}
-					</main>
-				</div>
-			</div>
+			)}
+			</main>
 
 			{/* Create Video Modal */}
 			<CreateVideoModal
