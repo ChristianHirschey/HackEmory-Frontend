@@ -78,7 +78,6 @@ export function CreateVideoModal({ isOpen, onClose }: CreateVideoModalProps) {
 			setYoutubeUrl('')
 			setTextContent('')
 			setFile(null)
-			alert(`Successfully generated ${data.count} video(s)!`)
 			onClose()
 		} catch (error) {
 			console.error('Error generating video:', error)
@@ -179,7 +178,7 @@ export function CreateVideoModal({ isOpen, onClose }: CreateVideoModalProps) {
 					</div>
 
 				</form>
-				
+
 				{/* Actions - Fixed at bottom */}
 				<div className="flex gap-3 pt-4 border-t border-gray-800 mt-4 flex-shrink-0">
 					<Button
