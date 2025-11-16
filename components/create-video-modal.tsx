@@ -5,8 +5,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Upload, LinkIcon, Sparkles } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
@@ -15,36 +13,11 @@ interface CreateVideoModalProps {
   onClose: () => void
 }
 
-const CHARACTERS = [
-  'Peter Griffin',
-  'Stewie Griffin',
-  'Brian Griffin',
-  'Lois Griffin',
-  'Meg Griffin',
-  'Chris Griffin',
-]
-
-const SUBJECTS = [
-  'Math',
-  'Science',
-  'History',
-  'Literature',
-  'Chemistry',
-  'Physics',
-  'Biology',
-  'Geography',
-  'Economics',
-  'Computer Science',
-]
-
 export function CreateVideoModal({ isOpen, onClose }: CreateVideoModalProps) {
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [subject, setSubject] = useState('')
-  const [character, setCharacter] = useState('')
   const [youtubeUrl, setYoutubeUrl] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState('youtube')
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -54,121 +27,104 @@ export function CreateVideoModal({ isOpen, onClose }: CreateVideoModalProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validate that we have either a URL or file
+    if (!youtubeUrl && !file) {
+      alert('Please provide a YouTube URL or upload a file')
+      return
+    }
+
     setLoading(true)
 
-    // Simulate video creation - replace with actual API call
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    try {
+      const formData = new FormData()
+      
+      // Add input_type (auto-detect)
+      formData.append('input_type', 'auto')
+      
+      // Add user_id (you might want to get this from auth context)
+      formData.append('user_id', '1')
+      
+      if (activeTab === 'youtube' && youtubeUrl) {
+        // For YouTube, send as 'content'
+        formData.append('content', youtubeUrl)
+      } else if (activeTab === 'upload' && file) {
+        // For file upload, send as 'file'
+        formData.append('file', file)
+      }
 
-    console.log('[v0] Creating video:', {
-      title,
-      description,
-      subject,
-      character,
-      youtubeUrl,
-      file: file?.name,
-    })
+      // Send to backend
+      const response = await fetch('http://localhost:8000/generate-video', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      })
 
-    // Reset form
-    setTitle('')
-    setDescription('')
-    setSubject('')
-    setCharacter('')
-    setYoutubeUrl('')
-    setFile(null)
-    setLoading(false)
-    onClose()
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.detail || 'Failed to generate video')
+      }
+
+      const data = await response.json()
+      console.log('✓ Video generation started:', data)
+      console.log(`✓ Generated ${data.count} videos`)
+
+      // Show success message
+      alert(`Successfully generated ${data.count} video(s)!`)
+
+      // Reset form
+      setYoutubeUrl('')
+      setFile(null)
+      onClose()
+    } catch (error) {
+      console.error('✗ Error generating video:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate video. Please try again.'
+      alert(errorMessage)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] bg-gray-900 border-gray-800 text-white max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[500px] bg-gray-900 border-gray-800 text-white">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold flex items-center gap-2">
             <Sparkles className="h-6 w-6 text-indigo-500" />
-            Create AI Study Video
+            Generate Video
           </DialogTitle>
           <DialogDescription className="text-gray-400">
-            Generate a study video narrated by your favorite Family Guy character. Upload content or provide a YouTube link.
+            Provide a source and we'll generate your video
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">
-          {/* Basic Info */}
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="title" className="text-white">Video Title</Label>
-              <Input
-                id="title"
-                placeholder="e.g., Introduction to Calculus"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-                className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description" className="text-white">Description</Label>
-              <Textarea
-                id="description"
-                placeholder="Describe what you want to learn about..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                required
-                rows={3}
-                className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 resize-none"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="subject" className="text-white">Subject</Label>
-                <Select value={subject} onValueChange={setSubject} required>
-                  <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
-                    <SelectValue placeholder="Select subject" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-800 border-gray-700">
-                    {SUBJECTS.map((subj) => (
-                      <SelectItem key={subj} value={subj} className="text-white hover:bg-gray-700">
-                        {subj}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="character" className="text-white">Voice Character</Label>
-                <Select value={character} onValueChange={setCharacter} required>
-                  <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
-                    <SelectValue placeholder="Select character" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-800 border-gray-700">
-                    {CHARACTERS.map((char) => (
-                      <SelectItem key={char} value={char} className="text-white hover:bg-gray-700">
-                        {char}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
           {/* Content Source */}
           <div className="space-y-2">
-            <Label className="text-white">Content Source</Label>
-            <Tabs defaultValue="upload" className="w-full">
+            <Label className="text-white">Source</Label>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 bg-gray-800">
+                <TabsTrigger value="youtube" className="data-[state=active]:bg-indigo-600">
+                  <LinkIcon className="h-4 w-4 mr-2" />
+                  YouTube URL
+                </TabsTrigger>
                 <TabsTrigger value="upload" className="data-[state=active]:bg-indigo-600">
                   <Upload className="h-4 w-4 mr-2" />
                   Upload File
                 </TabsTrigger>
-                <TabsTrigger value="youtube" className="data-[state=active]:bg-indigo-600">
-                  <LinkIcon className="h-4 w-4 mr-2" />
-                  YouTube Link
-                </TabsTrigger>
               </TabsList>
+
+              <TabsContent value="youtube" className="space-y-3 mt-4">
+                <Input
+                  placeholder="https://youtube.com/watch?v=..."
+                  value={youtubeUrl}
+                  onChange={(e) => setYoutubeUrl(e.target.value)}
+                  className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
+                />
+                <p className="text-sm text-gray-400">
+                  Paste a YouTube URL to generate a video
+                </p>
+              </TabsContent>
 
               <TabsContent value="upload" className="space-y-3 mt-4">
                 <div className="border-2 border-dashed border-gray-700 rounded-lg p-8 text-center hover:border-indigo-500 transition-colors cursor-pointer">
@@ -192,24 +148,12 @@ export function CreateVideoModal({ isOpen, onClose }: CreateVideoModalProps) {
                       <div>
                         <p className="text-white font-medium">Click to upload</p>
                         <p className="text-sm text-gray-400 mt-1">
-                          Video, PDF, or text file (Max 100MB)
+                          Video, PDF, or text file
                         </p>
                       </div>
                     )}
                   </label>
                 </div>
-              </TabsContent>
-
-              <TabsContent value="youtube" className="space-y-3 mt-4">
-                <Input
-                  placeholder="https://youtube.com/watch?v=..."
-                  value={youtubeUrl}
-                  onChange={(e) => setYoutubeUrl(e.target.value)}
-                  className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
-                />
-                <p className="text-sm text-gray-400">
-                  Paste a YouTube URL and we'll extract the content to create your study video.
-                </p>
               </TabsContent>
             </Tabs>
           </div>
