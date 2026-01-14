@@ -13,28 +13,23 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible'
-import {
   AlertCircle,
   ChevronDown,
-  ChevronRight,
   ImagePlus,
   Trash2,
   X,
-  Copy,
   AlertTriangle,
 } from 'lucide-react'
-import { TranscriptResult, ImageSize, ValidationResult } from '@/lib/types'
+import { TranscriptResult, ImageSize } from '@/lib/types'
 import { useImageEditor } from '@/hooks/use-image-editor'
+import { CaptionModeToggle } from '@/components/ui/caption-mode-toggle'
 
 interface TranscriptEditorProps {
   transcript: TranscriptResult
-  onGenerate: (images: File[], updatedTranscript: string) => void
+  onGenerate: (images: File[], updatedTranscript: string, karaokeMode: boolean) => void
   onCancel: () => void
   isGenerating?: boolean
+  initialKaraokeMode?: boolean
 }
 
 export function TranscriptEditor({
@@ -42,35 +37,21 @@ export function TranscriptEditor({
   onGenerate,
   onCancel,
   isGenerating = false,
+  initialKaraokeMode = true,
 }: TranscriptEditorProps) {
-  const [expandedSubtopics, setExpandedSubtopics] = useState<Set<number>>(
-    new Set([0]) // First subtopic expanded by default
-  )
+  const [karaokeMode, setKaraokeMode] = useState(initialKaraokeMode)
 
   const editor = useImageEditor(transcript.transcript_id, {
-    subtopic_transcripts: transcript.subtopic_transcripts,
+    dialogue_data: transcript.dialogue_data,
   })
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [pendingImageTarget, setPendingImageTarget] = useState<{
-    subtopicIdx: number
     lineIdx: number
   } | null>(null)
 
-  const toggleSubtopic = (index: number) => {
-    setExpandedSubtopics(prev => {
-      const next = new Set(prev)
-      if (next.has(index)) {
-        next.delete(index)
-      } else {
-        next.add(index)
-      }
-      return next
-    })
-  }
-
-  const handleAddImageClick = (subtopicIdx: number, lineIdx: number) => {
-    setPendingImageTarget({ subtopicIdx, lineIdx })
+  const handleAddImageClick = (lineIdx: number) => {
+    setPendingImageTarget({ lineIdx })
     fileInputRef.current?.click()
   }
 
@@ -78,7 +59,6 @@ export function TranscriptEditor({
     const file = e.target.files?.[0]
     if (file && pendingImageTarget) {
       editor.addImage(
-        pendingImageTarget.subtopicIdx,
         pendingImageTarget.lineIdx,
         file,
         'medium' // Default size
@@ -96,10 +76,11 @@ export function TranscriptEditor({
       // Validation errors will be shown in UI
       return
     }
-    onGenerate(editor.getImageFiles(), editor.getTranscriptJson())
+    onGenerate(editor.getImageFiles(), editor.getTranscriptJson(), karaokeMode)
   }
 
   const { validation } = editor
+  const dialogue = editor.state.transcript.dialogue_data
 
   return (
     <div className="flex flex-col h-full">
@@ -136,74 +117,63 @@ export function TranscriptEditor({
         </div>
       )}
 
-      {/* Subtopics List */}
-      <ScrollArea className="flex-1 pr-4">
-        <div className="space-y-3">
-          {editor.state.transcript.subtopic_transcripts.map((subtopic, subtopicIdx) => (
-            <Collapsible
-              key={subtopicIdx}
-              open={expandedSubtopics.has(subtopicIdx)}
-              onOpenChange={() => toggleSubtopic(subtopicIdx)}
-            >
-              <CollapsibleTrigger asChild>
-                <button className="flex items-center gap-2 w-full p-3 bg-gray-800 hover:bg-gray-750 rounded-lg text-left transition-colors">
-                  {expandedSubtopics.has(subtopicIdx) ? (
-                    <ChevronDown className="h-4 w-4 text-gray-400" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4 text-gray-400" />
-                  )}
-                  <span className="font-medium text-white flex-1">
-                    {subtopicIdx + 1}. {subtopic.subtopic_title}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {subtopic.dialogue.length} lines
-                    {subtopic.dialogue.some(l => l.image) && (
-                      <span className="ml-2 text-indigo-400">
-                        ({subtopic.dialogue.filter(l => l.image).length} images)
-                      </span>
-                    )}
-                  </span>
-                </button>
-              </CollapsibleTrigger>
+      {/* Dialogue Title */}
+      {dialogue?.title && (
+        <div className="mb-4 p-3 bg-gray-800 rounded-lg">
+          <h3 className="font-medium text-white">{dialogue.title}</h3>
+          <p className="text-sm text-gray-400 mt-1">
+            {dialogue.dialogue.length} dialogue lines
+            {dialogue.dialogue.some(l => l.image) && (
+              <span className="ml-2 text-indigo-400">
+                ({dialogue.dialogue.filter(l => l.image).length} images)
+              </span>
+            )}
+          </p>
+        </div>
+      )}
 
-              <CollapsibleContent className="pt-2">
-                <div className="space-y-2 pl-6">
-                  {subtopic.dialogue.map((line, lineIdx) => (
-                    <DialogueLineEditor
-                      key={lineIdx}
-                      line={line}
-                      lineIdx={lineIdx}
-                      subtopicIdx={subtopicIdx}
-                      previewUrl={line.image ? editor.getPreviewUrl(line.image.filename) : undefined}
-                      onAddImage={() => handleAddImageClick(subtopicIdx, lineIdx)}
-                      onRemoveImage={() => editor.removeImage(subtopicIdx, lineIdx)}
-                      onUpdateSize={(size) =>
-                        editor.updateImageConfig(subtopicIdx, lineIdx, { size })
-                      }
-                      onUpdateStartTime={(start_time) =>
-                        editor.updateImageConfig(subtopicIdx, lineIdx, {
-                          start_time: start_time === '' ? undefined : Number(start_time),
-                        })
-                      }
-                      onUpdateDuration={(duration) =>
-                        editor.updateImageConfig(subtopicIdx, lineIdx, {
-                          duration: duration === '' ? undefined : Number(duration),
-                        })
-                      }
-                      onUpdateCaption={(caption) =>
-                        editor.updateCaption(subtopicIdx, lineIdx, caption)
-                      }
-                    />
-                  ))}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
+      {/* Dialogue Lines */}
+      <ScrollArea className="flex-1 pr-4">
+        <div className="space-y-2">
+          {dialogue?.dialogue.map((line, lineIdx) => (
+            <DialogueLineEditor
+              key={lineIdx}
+              line={line}
+              lineIdx={lineIdx}
+              previewUrl={line.image ? editor.getPreviewUrl(line.image.filename) : undefined}
+              onAddImage={() => handleAddImageClick(lineIdx)}
+              onRemoveImage={() => editor.removeImage(lineIdx)}
+              onUpdateSize={(size) =>
+                editor.updateImageConfig(lineIdx, { size })
+              }
+              onUpdateStartTime={(start_time) =>
+                editor.updateImageConfig(lineIdx, {
+                  start_time: start_time === '' ? undefined : Number(start_time),
+                })
+              }
+              onUpdateDuration={(duration) =>
+                editor.updateImageConfig(lineIdx, {
+                  duration: duration === '' ? undefined : Number(duration),
+                })
+              }
+              onUpdateCaption={(caption) =>
+                editor.updateCaption(lineIdx, caption)
+              }
+            />
           ))}
         </div>
       </ScrollArea>
 
       {/* Summary & Actions */}
       <div className="mt-4 pt-4 border-t border-gray-800">
+        {/* Caption Mode Toggle */}
+        <div className="mb-4">
+          <CaptionModeToggle
+            enabled={karaokeMode}
+            onToggle={setKaraokeMode}
+          />
+        </div>
+
         <div className="flex items-center justify-between mb-4">
           <div className="text-sm text-gray-400">
             {editor.hasImages() ? (
@@ -241,7 +211,7 @@ export function TranscriptEditor({
             className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
             disabled={isGenerating || !validation.valid}
           >
-            {isGenerating ? 'Generating...' : 'Generate Videos'}
+            {isGenerating ? 'Generating...' : 'Generate Video'}
           </Button>
         </div>
       </div>
@@ -264,7 +234,6 @@ interface DialogueLineEditorProps {
     duration_estimate?: number
   }
   lineIdx: number
-  subtopicIdx: number
   previewUrl?: string
   onAddImage: () => void
   onRemoveImage: () => void
@@ -292,6 +261,11 @@ function DialogueLineEditor({
       {/* Line Header */}
       <div className="p-3">
         <div className="flex items-start gap-3">
+          {/* Line Number */}
+          <span className="text-xs text-gray-500 font-mono w-6 text-right shrink-0">
+            {lineIdx + 1}
+          </span>
+
           {/* Speaker Badge */}
           <span
             className={`px-2 py-0.5 text-xs font-medium rounded ${
@@ -330,7 +304,7 @@ function DialogueLineEditor({
         </div>
 
         {line.duration_estimate && (
-          <span className="text-xs text-gray-500 mt-1 block">
+          <span className="text-xs text-gray-500 mt-1 block ml-9">
             ~{line.duration_estimate.toFixed(1)}s
           </span>
         )}
