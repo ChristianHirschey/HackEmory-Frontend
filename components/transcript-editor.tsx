@@ -170,7 +170,7 @@ export function TranscriptEditor({
         <div className="mb-4">
           <CaptionModeToggle
             enabled={karaokeMode}
-            onToggle={setKaraokeMode}
+            onChange={setKaraokeMode}
           />
         </div>
 
