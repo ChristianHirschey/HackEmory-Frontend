@@ -122,7 +122,7 @@ export async function generateVideo(request: VideoRequest): Promise<JobCreatedRe
   
   if (request.images && request.images.length > 0) {
     request.images.forEach(image => {
-      formData.append('images[]', image)
+      formData.append('images', image)
     })
   }
   
