@@ -73,8 +73,12 @@ export function CreateVideoModal({ isOpen, onClose }: CreateVideoModalProps) {
 		}
 	}
 
-	const handleGenerateVideo = async (images?: File[], updatedTranscript?: string) => {
+	const handleGenerateVideo = async (images?: File[], updatedTranscript?: string, karaokeMode?: boolean) => {
 		try {
+			// Update karaoke mode if provided
+			if (karaokeMode !== undefined) {
+				workflow.setKaraokeMode(karaokeMode)
+			}
 			await workflow.startVideo({ images, updatedTranscript })
 		} catch (error) {
 			console.error('Error starting video generation:', error)
@@ -186,7 +190,7 @@ export function CreateVideoModal({ isOpen, onClose }: CreateVideoModalProps) {
 
 		const stepLabels = {
 			transcript: 'Generating Transcript',
-			video: 'Creating Videos',
+			video: 'Creating Video',
 		}
 
 		const isTranscriptStep = step === 'transcript'
@@ -249,11 +253,10 @@ export function CreateVideoModal({ isOpen, onClose }: CreateVideoModalProps) {
 						<Progress value={percentage} className="h-2" />
 						<p className="text-sm text-gray-400 text-center">{message}</p>
 
-						{/* Subtopic Progress (Video step only) */}
-						{isVideoStep && progress?.current_subtopic && progress?.total_subtopics && (
+						{/* Dialogue Title (Video step) */}
+						{isVideoStep && progress?.dialogue_title && (
 							<p className="text-xs text-gray-500 text-center">
-								Subtopic {progress.current_subtopic} of {progress.total_subtopics}
-								{progress.subtopic_title && `: ${progress.subtopic_title}`}
+								{progress.dialogue_title}
 							</p>
 						)}
 					</div>
@@ -263,7 +266,7 @@ export function CreateVideoModal({ isOpen, onClose }: CreateVideoModalProps) {
 	}
 
 	const renderComplete = () => {
-		const { videos } = workflow
+		const { video, dialogue } = workflow
 
 		return (
 			<div className="space-y-6 text-center">
@@ -272,27 +275,38 @@ export function CreateVideoModal({ isOpen, onClose }: CreateVideoModalProps) {
 						<CheckCircle2 className="h-10 w-10 text-white" />
 					</div>
 					<div>
-						<h3 className="text-xl font-bold text-white">Videos Generated!</h3>
+						<h3 className="text-xl font-bold text-white">Video Generated!</h3>
 						<p className="text-gray-400 mt-1">
-							{videos?.video_count} video{videos?.video_count !== 1 ? 's' : ''} created successfully
+							Your video has been created successfully
 						</p>
 					</div>
 				</div>
 
-				{videos && videos.results.length > 0 && (
+				{video && (
 					<div className="bg-gray-800 rounded-lg p-4 text-left">
-						<p className="text-sm text-gray-400 mb-2">Generated videos:</p>
-						<ul className="space-y-2">
-							{videos.results.map((video, i) => (
-								<li key={i} className="text-white text-sm flex items-center justify-between">
-									<span className="flex items-center gap-2">
-										<span className="text-indigo-400">{i + 1}.</span>
-										{video.subtopic_title}
-									</span>
-									<CheckCircle2 className="h-4 w-4 text-green-400" />
-								</li>
-							))}
-						</ul>
+						<div className="flex items-center justify-between">
+							<div>
+								<p className="text-white font-medium">
+									{dialogue?.title || 'Educational Video'}
+								</p>
+								{dialogue && (
+									<p className="text-sm text-gray-400 mt-1">
+										{dialogue.dialogue.length} dialogue lines
+									</p>
+								)}
+							</div>
+							<CheckCircle2 className="h-6 w-6 text-green-400" />
+						</div>
+						{video.access_url && (
+							<a
+								href={video.access_url}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="mt-3 inline-block text-sm text-indigo-400 hover:text-indigo-300 underline"
+							>
+								View video
+							</a>
+						)}
 					</div>
 				)}
 			</div>
@@ -337,6 +351,7 @@ export function CreateVideoModal({ isOpen, onClose }: CreateVideoModalProps) {
 							onGenerate={handleGenerateVideo}
 							onCancel={handleReset}
 							isGenerating={workflow.isLoading}
+							initialKaraokeMode={workflow.karaokeMode}
 						/>
 					)
 				}
@@ -449,7 +464,7 @@ export function CreateVideoModal({ isOpen, onClose }: CreateVideoModalProps) {
 			case 'editing':
 				return 'Review Transcript'
 			case 'video':
-				return 'Creating Videos...'
+				return 'Creating Video...'
 			case 'complete':
 				return 'Complete!'
 			case 'error':
@@ -467,9 +482,9 @@ export function CreateVideoModal({ isOpen, onClose }: CreateVideoModalProps) {
 			case 'editing':
 				return 'Review your transcript and optionally attach images to dialogue lines.'
 			case 'video':
-				return 'Creating educational videos with AI-generated voices'
+				return 'Creating your educational video with AI-generated voices'
 			case 'complete':
-				return 'Your videos are ready to watch'
+				return 'Your video is ready to watch'
 			case 'error':
 				return 'Something went wrong during generation'
 			default:
