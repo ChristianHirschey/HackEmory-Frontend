@@ -15,7 +15,7 @@ export default function ExplorePage() {
 		status,
 	} = useQuery({
 		queryKey: ['collections'],
-		queryFn: fetchCollections,
+		queryFn: () => fetchCollections(),
 	})
 
 	const collections = collectionsData?.collections ?? []

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, Suspense } from 'react'
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -18,7 +18,7 @@ interface VideoWithMetadata extends VideoResponse {
 	duration?: string
 }
 
-export default function FeedPage() {
+function FeedContent() {
 	const searchParams = useSearchParams()
 	const collectionParam = searchParams.get('collection')
 	
@@ -303,5 +303,24 @@ export default function FeedPage() {
 				onClose={() => setIsCreateModalOpen(false)}
 			/>
 		</div>
+	)
+}
+
+function FeedLoading() {
+	return (
+		<div className="h-screen bg-black flex items-center justify-center">
+			<div className="text-center">
+				<Loader2 className="h-12 w-12 text-indigo-500 animate-spin mx-auto mb-4" />
+				<p className="text-white text-lg">Loading...</p>
+			</div>
+		</div>
+	)
+}
+
+export default function FeedPage() {
+	return (
+		<Suspense fallback={<FeedLoading />}>
+			<FeedContent />
+		</Suspense>
 	)
 }

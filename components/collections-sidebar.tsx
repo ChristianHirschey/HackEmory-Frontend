@@ -17,7 +17,7 @@ export function CollectionsSidebar({ onCollectionSelect, selectedCollectionId }:
 
   const { data: collectionsData, isLoading } = useQuery({
     queryKey: ['collections'],
-    queryFn: fetchCollections,
+    queryFn: () => fetchCollections(),
   })
 
   const collections = collectionsData?.collections || []
