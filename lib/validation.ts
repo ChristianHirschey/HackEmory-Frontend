@@ -36,23 +36,25 @@ export function getFileExtension(filename: string): string {
  * Check if a filename is used anywhere in the transcript (NEW: single dialogue format)
  */
 export function isFilenameUsedInTranscript(
-  transcript: { dialogue_data: SingleDialogue },
+  transcript: { dialogue?: SingleDialogue },
   filename: string | undefined
 ): boolean {
-  if (!filename) return false
+  if (!filename || !transcript.dialogue?.dialogue) return false
 
-  return transcript.dialogue_data.dialogue.some(line => line.image?.filename === filename)
+  return transcript.dialogue.dialogue.some(line => line.image?.filename === filename)
 }
 
 /**
  * Get all filenames referenced in the transcript (NEW: single dialogue format)
  */
 export function getAllReferencedFilenames(
-  transcript: { dialogue_data: SingleDialogue }
+  transcript: { dialogue?: SingleDialogue }
 ): Set<string> {
   const filenames = new Set<string>()
 
-  transcript.dialogue_data.dialogue.forEach(line => {
+  if (!transcript.dialogue?.dialogue) return filenames
+
+  transcript.dialogue.dialogue.forEach(line => {
     if (line.image?.filename) {
       filenames.add(line.image.filename)
     }
@@ -285,7 +287,7 @@ export function validateImageTiming(
  * (NEW: single dialogue format)
  */
 export function validateFilenameMatching(
-  transcript: { dialogue_data: SingleDialogue },
+  transcript: { dialogue?: SingleDialogue },
   imageFiles: Map<string, File>
 ): string[] {
   const errors: string[] = []
@@ -307,7 +309,7 @@ export function validateFilenameMatching(
  */
 export function validateBeforeUpload(
   transcriptId: string,
-  transcript: { dialogue_data: SingleDialogue },
+  transcript: { dialogue?: SingleDialogue },
   imageFiles: Map<string, File>
 ): ValidationResult {
   const errors: string[] = []
@@ -319,36 +321,36 @@ export function validateBeforeUpload(
   }
 
   // 2. Check transcript structure
-  if (!transcript.dialogue_data) {
-    errors.push('Transcript has no dialogue_data')
+  if (!transcript.dialogue) {
+    errors.push('Transcript has no dialogue')
   } else {
     // 3. Check dialogue title
-    if (!transcript.dialogue_data.title) {
-      errors.push('Dialogue has no title')
+    if (!transcript.dialogue.title) {
+      warnings.push('Dialogue has no title')
     }
 
     // 4. Check dialogue array
-    if (!transcript.dialogue_data.dialogue || transcript.dialogue_data.dialogue.length === 0) {
+    if (!transcript.dialogue.dialogue || transcript.dialogue.dialogue.length === 0) {
       errors.push('Dialogue has no lines')
+    } else {
+      // 5. Validate each dialogue line
+      transcript.dialogue.dialogue.forEach((line, li) => {
+        const lineId = `Line ${li + 1}`
+
+        if (!line.caption || line.caption.trim() === '') {
+          errors.push(`${lineId}: Missing caption`)
+        }
+
+        if (!line.speaker || !['PETER', 'STEWIE'].includes(line.speaker)) {
+          errors.push(`${lineId}: Invalid speaker "${line.speaker}"`)
+        }
+
+        // 6. Validate image config if present
+        if (line.image) {
+          validateImageConfig(line.image, lineId, errors, warnings, line.duration_estimate)
+        }
+      })
     }
-
-    // 5. Validate each dialogue line
-    transcript.dialogue_data.dialogue.forEach((line, li) => {
-      const lineId = `Line ${li + 1}`
-
-      if (!line.caption || line.caption.trim() === '') {
-        errors.push(`${lineId}: Missing caption`)
-      }
-
-      if (!line.speaker || !['PETER', 'STEWIE'].includes(line.speaker)) {
-        errors.push(`${lineId}: Invalid speaker "${line.speaker}"`)
-      }
-
-      // 6. Validate image config if present
-      if (line.image) {
-        validateImageConfig(line.image, lineId, errors, warnings, line.duration_estimate)
-      }
-    })
   }
 
   // 7. Validate filename matching
@@ -382,7 +384,7 @@ export function validateBeforeUpload(
  */
 export function validateImportedTranscript(json: string): {
   valid: boolean
-  transcript?: { dialogue_data: SingleDialogue }
+  transcript?: { dialogue: SingleDialogue }
   missingFiles?: string[]
   errors?: string[]
 } {
@@ -399,15 +401,15 @@ export function validateImportedTranscript(json: string): {
   }
 
   // 2. Check structure - new single dialogue format
-  if (!parsed.dialogue_data || !parsed.dialogue_data.dialogue || !Array.isArray(parsed.dialogue_data.dialogue)) {
+  if (!parsed.dialogue || !parsed.dialogue.dialogue || !Array.isArray(parsed.dialogue.dialogue)) {
     return {
       valid: false,
-      errors: ['Missing or invalid dialogue_data.dialogue array'],
+      errors: ['Missing or invalid dialogue.dialogue array'],
     }
   }
 
   // 3. Collect referenced images
-  const referencedFiles = getAllReferencedFilenames(parsed)
+  const referencedFiles = getAllReferencedFilenames(parsed as { dialogue: SingleDialogue })
 
   // 4. Return for user to upload missing files
   return {

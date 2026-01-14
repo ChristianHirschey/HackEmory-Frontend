@@ -193,7 +193,7 @@ export function useTranscriptGeneration(userId: number = 1): UseTranscriptGenera
     : null
 
   // Convenience accessor for the single dialogue
-  const dialogue = transcript?.dialogue_data ?? null
+  const dialogue = transcript?.dialogue ?? null
 
   return {
     generate,

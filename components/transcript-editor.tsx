@@ -42,7 +42,7 @@ export function TranscriptEditor({
   const [karaokeMode, setKaraokeMode] = useState(initialKaraokeMode)
 
   const editor = useImageEditor(transcript.transcript_id, {
-    dialogue_data: transcript.dialogue_data,
+    dialogue: transcript.dialogue,
   })
 
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -80,7 +80,7 @@ export function TranscriptEditor({
   }
 
   const { validation } = editor
-  const dialogue = editor.state.transcript.dialogue_data
+  const dialogue = editor.state.transcript.dialogue
 
   return (
     <div className="flex flex-col h-full">

@@ -73,7 +73,7 @@ interface UseImageEditorReturn {
  */
 export function useImageEditor(
   transcriptId: string,
-  initialTranscript: { dialogue_data: SingleDialogue },
+  initialTranscript: { dialogue: SingleDialogue },
   options: UseImageEditorOptions = {}
 ): UseImageEditorReturn {
   const { autoRenameDuplicates = true, validateOnChange = true } = options
@@ -137,7 +137,7 @@ export function useImageEditor(
         }
 
         // Update transcript (single dialogue format)
-        const line = newTranscript.dialogue_data?.dialogue[lineIdx]
+        const line = newTranscript.dialogue?.dialogue[lineIdx]
         if (!line) {
           console.error(`Invalid line reference: line ${lineIdx}`)
           return prevState
@@ -166,7 +166,7 @@ export function useImageEditor(
     (lineIdx: number, updates: Partial<ImageConfig>) => {
       setState(prevState => {
         const newTranscript = deepClone(prevState.transcript)
-        const line = newTranscript.dialogue_data?.dialogue[lineIdx]
+        const line = newTranscript.dialogue?.dialogue[lineIdx]
 
         if (!line?.image) {
           console.error(`No image at line ${lineIdx}`)
@@ -184,7 +184,7 @@ export function useImageEditor(
   const removeImage = useCallback((lineIdx: number) => {
     setState(prevState => {
       const newTranscript = deepClone(prevState.transcript)
-      const line = newTranscript.dialogue_data?.dialogue[lineIdx]
+      const line = newTranscript.dialogue?.dialogue[lineIdx]
 
       if (!line?.image) {
         return prevState
@@ -223,7 +223,7 @@ export function useImageEditor(
   const copyImageToLine = useCallback(
     (fromLineIdx: number, toLineIdx: number) => {
       setState(prevState => {
-        const fromLine = prevState.transcript.dialogue_data?.dialogue[fromLineIdx]
+        const fromLine = prevState.transcript.dialogue?.dialogue[fromLineIdx]
 
         if (!fromLine?.image) {
           console.error(`Source line has no image`)
@@ -231,7 +231,7 @@ export function useImageEditor(
         }
 
         const newTranscript = deepClone(prevState.transcript)
-        const toLine = newTranscript.dialogue_data?.dialogue[toLineIdx]
+        const toLine = newTranscript.dialogue?.dialogue[toLineIdx]
 
         if (!toLine) {
           console.error(`Invalid target line: ${toLineIdx}`)
@@ -277,7 +277,7 @@ export function useImageEditor(
     (lineIdx: number, caption: string) => {
       setState(prevState => {
         const newTranscript = deepClone(prevState.transcript)
-        const line = newTranscript.dialogue_data?.dialogue[lineIdx]
+        const line = newTranscript.dialogue?.dialogue[lineIdx]
 
         if (!line) {
           console.error(`Invalid line: ${lineIdx}`)
@@ -304,7 +304,7 @@ export function useImageEditor(
   }, [state.imageFiles])
 
   const getTranscriptJson = useCallback((): string => {
-    return JSON.stringify({ dialogue_data: state.transcript.dialogue_data })
+    return JSON.stringify({ dialogue: state.transcript.dialogue })
   }, [state.transcript])
 
   const hasImages = useCallback((): boolean => {
@@ -316,7 +316,7 @@ export function useImageEditor(
       const newTranscript = deepClone(prevState.transcript)
 
       // Remove all image references (single dialogue format)
-      newTranscript.dialogue_data?.dialogue.forEach(line => {
+      newTranscript.dialogue?.dialogue.forEach(line => {
         delete line.image
       })
 

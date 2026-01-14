@@ -77,7 +77,7 @@ export interface SingleDialogue {
 export interface TranscriptResult {
   transcript_id: string
   expires_in_hours: number
-  dialogue_data: SingleDialogue  // New single dialogue format
+  dialogue: SingleDialogue  // Backend returns "dialogue" not "dialogue_data"
 }
 
 // ============ Video Result Types ============
@@ -149,7 +149,7 @@ export interface AuthResponse {
 // ============ Image Editor Types ============
 export interface ImageEditorState {
   transcriptId: string
-  transcript: { dialogue_data: SingleDialogue }  // Updated for single dialogue
+  transcript: { dialogue: SingleDialogue }  // Matches API response format
   imageFiles: Map<string, File>
   imagePreviewUrls: Map<string, string>
 }
