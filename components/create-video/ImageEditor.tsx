@@ -125,10 +125,13 @@ export function ImageEditor({
                 <ImageLineManager
                   line={line}
                   lineIdx={lineIdx}
+                  previousLine={lineIdx > 0 ? dialogue.dialogue[lineIdx - 1] : undefined}
+                  totalLines={dialogue.dialogue.length}
                   previewUrls={editor.state.imagePreviewUrls}
                   onAddImage={(file, size, position) => handleAddImage(lineIdx, file, size, position)}
                   onRemoveImage={(imgIdx) => handleRemoveImage(lineIdx, imgIdx)}
                   onUpdateImage={(imgIdx, updates) => handleUpdateImage(lineIdx, imgIdx, updates)}
+                  calculateSpanDuration={editor.calculateSpanDuration}
                 />
               </div>
             ))}

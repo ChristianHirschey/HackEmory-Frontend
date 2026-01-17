@@ -59,6 +59,8 @@ interface UseImageEditorMultiReturn {
   reset: () => void
   /** Manually trigger validation */
   validate: () => ValidationResult
+  /** Calculate cumulative duration from startLineIdx to endLineIdx (for image spanning) */
+  calculateSpanDuration: (startLineIdx: number, endLineIdx: number) => number
 }
 
 /**
@@ -324,6 +326,25 @@ export function useImageEditorMulti(
     return result
   }, [state])
 
+  /**
+   * Calculate cumulative duration from startLineIdx to endLineIdx.
+   * Used for spanning images across multiple dialogue lines.
+   */
+  const calculateSpanDuration = useCallback(
+    (startLineIdx: number, endLineIdx: number): number => {
+      const dialogue = state.transcript.dialogue?.dialogue
+      if (!dialogue) return 0
+
+      let totalDuration = 0
+      for (let i = startLineIdx; i <= endLineIdx && i < dialogue.length; i++) {
+        // Use duration_estimate if available, otherwise default to 3 seconds per line
+        totalDuration += dialogue[i].duration_estimate || 3.0
+      }
+      return totalDuration
+    },
+    [state.transcript]
+  )
+
   return {
     state,
     validation,
@@ -338,5 +359,6 @@ export function useImageEditorMulti(
     clearAllImages,
     reset,
     validate,
+    calculateSpanDuration,
   }
 }

@@ -77,6 +77,7 @@ export interface ImageConfig {
 export interface DialogueLine {
   caption: string
   speaker: Speaker
+  emotion?: 'neutral' | 'angry' | 'excited' | 'confused'
   image?: ImageConfig       // Single image (backward compatible)
   images?: ImageConfig[]    // Multiple simultaneous images
   line_number?: number
