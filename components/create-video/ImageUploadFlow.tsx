@@ -124,7 +124,7 @@ export function ImageUploadFlow({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleReset}>
-      <DialogContent className="sm:max-w-[600px] bg-gray-900 border-gray-800 text-white">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto bg-gray-900 border-gray-800 text-white">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5 text-indigo-400" />
@@ -144,7 +144,7 @@ export function ImageUploadFlow({
               <p className="text-sm text-gray-400 mb-4">
                 Choose a size for your educational image:
               </p>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {(['small', 'medium', 'large'] as ImageSize[]).map((size) => {
                   const isAllowed = allowedSizes.includes(size)
                   return (
@@ -152,22 +152,22 @@ export function ImageUploadFlow({
                       key={size}
                       onClick={() => isAllowed && handleSizeSelect(size)}
                       disabled={!isAllowed}
-                      className={`p-4 rounded-lg border-2 transition-all ${
+                      className={`p-3 rounded-lg border-2 transition-all text-left ${
                         isAllowed
                           ? 'border-gray-700 hover:border-indigo-500 hover:bg-gray-800 cursor-pointer'
                           : 'border-gray-800 bg-gray-800/50 cursor-not-allowed opacity-50'
                       }`}
                     >
-                      <div className={`text-lg font-semibold ${isAllowed ? 'text-white' : 'text-gray-500'}`}>
+                      <div className={`text-base font-semibold ${isAllowed ? 'text-white' : 'text-gray-500'}`}>
                         {size.charAt(0).toUpperCase() + size.slice(1)}
                       </div>
                       <div className="text-xs text-gray-400 mt-1">
-                        {size === 'small' && '300px • Icons, small diagrams'}
-                        {size === 'medium' && '540px • Charts, formulas'}
-                        {size === 'large' && '800px • Main diagrams'}
+                        {size === 'small' && '300px'}
+                        {size === 'medium' && '540px'}
+                        {size === 'large' && '800px'}
                       </div>
                       {!isAllowed && (
-                        <div className="text-xs text-red-400 mt-2">
+                        <div className="text-xs text-red-400 mt-1">
                           Limit reached
                         </div>
                       )}
@@ -192,18 +192,18 @@ export function ImageUploadFlow({
               {!selectedFile ? (
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-gray-700 rounded-lg p-8 text-center hover:border-indigo-500 transition-colors cursor-pointer"
+                  className="border-2 border-dashed border-gray-700 rounded-lg p-6 text-center hover:border-indigo-500 transition-colors cursor-pointer"
                 >
-                  <Upload className="h-12 w-12 text-gray-500 mx-auto mb-3" />
+                  <Upload className="h-10 w-10 text-gray-500 mx-auto mb-2" />
                   <p className="text-white font-medium">Click to upload</p>
                   <p className="text-sm text-gray-400 mt-1">
                     PNG, JPG, JPEG, or GIF (max 10MB)
                   </p>
                 </div>
               ) : (
-                <div className="flex items-start gap-4 p-4 bg-gray-800 rounded-lg">
+                <div className="flex items-start gap-3 p-3 bg-gray-800 rounded-lg">
                   {previewUrl && (
-                    <div className="w-24 h-24 rounded overflow-hidden bg-gray-700 shrink-0">
+                    <div className="w-20 h-20 rounded overflow-hidden bg-gray-700 shrink-0">
                       <img
                         src={previewUrl}
                         alt="Preview"
@@ -212,11 +212,11 @@ export function ImageUploadFlow({
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-medium truncate">{selectedFile.name}</p>
-                    <p className="text-sm text-gray-400">
+                    <p className="text-white font-medium truncate text-sm">{selectedFile.name}</p>
+                    <p className="text-xs text-gray-400">
                       {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                     </p>
-                    <p className="text-sm text-indigo-400 mt-1">
+                    <p className="text-xs text-indigo-400 mt-1">
                       Size: {getSizeLabel(selectedSize!)}
                     </p>
                   </div>
@@ -240,9 +240,9 @@ export function ImageUploadFlow({
           {/* Step 3: Position Selection */}
           {step === 'position' && selectedSize && (
             <div className="space-y-4">
-              <div className="flex items-center gap-4 mb-4">
+              <div className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg">
                 {previewUrl && (
-                  <div className="w-16 h-16 rounded overflow-hidden bg-gray-700 shrink-0">
+                  <div className="w-12 h-12 rounded overflow-hidden bg-gray-700 shrink-0">
                     <img
                       src={previewUrl}
                       alt="Preview"
@@ -250,63 +250,42 @@ export function ImageUploadFlow({
                     />
                   </div>
                 )}
-                <div>
-                  <p className="text-white font-medium">{selectedFile?.name}</p>
-                  <p className="text-sm text-indigo-400">{getSizeLabel(selectedSize)}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-medium text-sm truncate">{selectedFile?.name}</p>
+                  <p className="text-xs text-indigo-400">{getSizeLabel(selectedSize)}</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                {/* Position dropdown */}
-                <div>
-                  <Label className="text-gray-400 text-sm mb-2 block">Position</Label>
-                  <Select
-                    value={selectedPosition || undefined}
-                    onValueChange={(v) => setSelectedPosition(v as ImagePosition)}
-                  >
-                    <SelectTrigger className="bg-gray-800 border-gray-700">
-                      <SelectValue placeholder="Select position" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availablePositions.map((pos) => (
-                        <SelectItem key={pos} value={pos}>
-                          {getPositionLabel(pos)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Visual Grid Preview */}
-              <div className="mt-4">
-                <Label className="text-gray-400 text-sm mb-2 block">Preview</Label>
-                <ImagePositionGrid
-                  currentImages={[
-                    ...currentImages,
-                    // Add pending image for preview
-                    ...(selectedPosition ? [{
-                      filename: selectedFile?.name || 'pending',
-                      size: selectedSize,
-                      position: selectedPosition,
-                    }] : []),
-                  ]}
-                  previewUrls={new Map([
-                    ...previewUrls,
-                    ...(previewUrl && selectedFile ? [[selectedFile.name, previewUrl] as [string, string]] : []),
-                  ])}
-                  selectedSize={selectedSize}
-                  onPositionSelect={handlePositionSelect}
-                  interactive={true}
-                  className="max-w-[250px] mx-auto"
-                />
+              {/* Position dropdown - simpler layout */}
+              <div>
+                <Label className="text-gray-400 text-sm mb-2 block">Select Position</Label>
+                <Select
+                  value={selectedPosition || undefined}
+                  onValueChange={(v) => setSelectedPosition(v as ImagePosition)}
+                >
+                  <SelectTrigger className="bg-gray-800 border-gray-700 w-full">
+                    <SelectValue placeholder="Select position" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availablePositions.map((pos) => (
+                      <SelectItem key={pos} value={pos}>
+                        {getPositionLabel(pos)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500 mt-2">
+                  {selectedSize === 'small' && 'Small images appear in the lower right area'}
+                  {selectedSize === 'medium' && 'Medium images appear at top or bottom corners'}
+                  {selectedSize === 'large' && 'Large images appear at the top center'}
+                </p>
               </div>
             </div>
           )}
         </div>
 
-        {/* Actions */}
-        <div className="flex gap-3 pt-4 border-t border-gray-800">
+        {/* Actions - always visible at bottom */}
+        <div className="flex gap-3 pt-4 border-t border-gray-800 sticky bottom-0 bg-gray-900">
           {step !== 'size' && (
             <Button
               variant="outline"
@@ -334,7 +313,7 @@ export function ImageUploadFlow({
               disabled={!selectedFile}
               className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
             >
-              Next: Choose Position
+              Next
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           )}
