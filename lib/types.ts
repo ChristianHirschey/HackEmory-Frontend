@@ -53,9 +53,23 @@ export interface JobCreatedResponse {
 // ============ Transcript Types ============
 export type Speaker = 'PETER' | 'STEWIE'
 
+// ============ Image Position Types ============
+// Small: 300px width, lower right half of screen
+export type SmallImagePosition = 'right-high' | 'right-mid' | 'right-low'
+
+// Medium: 540px width (400px at bottom-right to avoid character overlap)
+export type MediumImagePosition = 'top-left' | 'top-right' | 'bottom-right'
+
+// Large: 800px width, top center
+export type LargeImagePosition = 'top-center'
+
+// All positions combined
+export type ImagePosition = SmallImagePosition | MediumImagePosition | LargeImagePosition
+
 export interface ImageConfig {
   filename: string
-  size: 'medium' | 'large'  // medium=432px top-right, large=800px top-center
+  size: ImageSize           // small=300px, medium=540px, large=800px
+  position?: ImagePosition  // Position on screen (defaults based on size)
   start_time?: number       // Delay in seconds after line starts
   duration?: number         // Display duration in seconds
 }
@@ -63,7 +77,8 @@ export interface ImageConfig {
 export interface DialogueLine {
   caption: string
   speaker: Speaker
-  image?: ImageConfig
+  image?: ImageConfig       // Single image (backward compatible)
+  images?: ImageConfig[]    // Multiple simultaneous images
   line_number?: number
   duration_estimate?: number
 }
@@ -160,7 +175,7 @@ export interface ValidationResult {
   warnings: string[]
 }
 
-export type ImageSize = 'medium' | 'large'
+export type ImageSize = 'small' | 'medium' | 'large'
 
 // ============ Error Types ============
 export interface ApiError {

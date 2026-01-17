@@ -1,0 +1,182 @@
+'use client'
+
+import { useRouter } from 'next/navigation'
+import { useQueryClient } from '@tanstack/react-query'
+import { XCircle, RotateCcw, ArrowLeft } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { useFullVideoWorkflow } from '@/hooks/use-video-generation'
+import { SourceType } from '@/lib/types'
+
+import { CreateStepIndicator, CreateStep } from '@/components/create-video/CreateStepIndicator'
+import { SourceInput } from '@/components/create-video/SourceInput'
+import { ProgressDisplay } from '@/components/create-video/ProgressDisplay'
+import { ImageEditor } from '@/components/create-video/ImageEditor'
+import { CompleteScreen } from '@/components/create-video/CompleteScreen'
+
+export default function CreatePage() {
+  const router = useRouter()
+  const queryClient = useQueryClient()
+
+  // TODO: Get user_id from auth context
+  const workflow = useFullVideoWorkflow(1)
+
+  // Map workflow step to CreateStep type
+  const getCreateStep = (): CreateStep => {
+    switch (workflow.step) {
+      case 'idle':
+        return 'source'
+      case 'transcript':
+        return 'transcript'
+      case 'editing':
+        return 'editing'
+      case 'video':
+        return 'video'
+      case 'complete':
+        return 'complete'
+      case 'error':
+        return 'error'
+      default:
+        return 'source'
+    }
+  }
+
+  const handleSourceSubmit = async (sourceType: SourceType, content?: string, file?: File) => {
+    try {
+      await workflow.startTranscript({
+        source_type: sourceType,
+        content,
+        file,
+      })
+    } catch (error) {
+      console.error('Error starting transcript:', error)
+    }
+  }
+
+  const handleGenerateVideo = async (images: File[], updatedTranscript: string, karaokeMode: boolean) => {
+    try {
+      workflow.setKaraokeMode(karaokeMode)
+      await workflow.startVideo({ images, updatedTranscript })
+    } catch (error) {
+      console.error('Error starting video generation:', error)
+    }
+  }
+
+  const handleReset = () => {
+    workflow.reset()
+  }
+
+  const handleCreateAnother = () => {
+    // Invalidate queries to refresh video lists
+    queryClient.invalidateQueries({ queryKey: ['videos'] })
+    queryClient.invalidateQueries({ queryKey: ['collections'] })
+    workflow.reset()
+  }
+
+  const handleGoHome = () => {
+    queryClient.invalidateQueries({ queryKey: ['videos'] })
+    queryClient.invalidateQueries({ queryKey: ['collections'] })
+    router.push('/feed')
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-950 text-white">
+      {/* Header */}
+      <header className="border-b border-gray-800 bg-gray-900/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+          <Button
+            variant="ghost"
+            onClick={handleGoHome}
+            className="text-gray-400 hover:text-white"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Feed
+          </Button>
+
+          <CreateStepIndicator currentStep={getCreateStep()} />
+
+          <div className="w-24" /> {/* Spacer for centering */}
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 py-8">
+        {/* Source Input Step */}
+        {workflow.step === 'idle' && (
+          <SourceInput
+            onSubmit={handleSourceSubmit}
+            isLoading={workflow.isLoading}
+          />
+        )}
+
+        {/* Transcript Generation Progress */}
+        {workflow.step === 'transcript' && (
+          <ProgressDisplay
+            progress={workflow.progress}
+            step="transcript"
+          />
+        )}
+
+        {/* Editing Step (with Image Editor) */}
+        {workflow.step === 'editing' && workflow.transcript && (
+          <ImageEditor
+            transcript={workflow.transcript}
+            onGenerate={handleGenerateVideo}
+            onBack={handleReset}
+            isGenerating={workflow.isLoading}
+            initialKaraokeMode={workflow.karaokeMode}
+          />
+        )}
+
+        {/* Video Generation Progress */}
+        {workflow.step === 'video' && (
+          <ProgressDisplay
+            progress={workflow.progress}
+            step="video"
+          />
+        )}
+
+        {/* Complete Step */}
+        {workflow.step === 'complete' && (
+          <CompleteScreen
+            video={workflow.video}
+            dialogue={workflow.dialogue}
+            onCreateAnother={handleCreateAnother}
+          />
+        )}
+
+        {/* Error Step */}
+        {workflow.step === 'error' && (
+          <div className="max-w-xl mx-auto text-center space-y-8">
+            <div>
+              <div className="w-20 h-20 rounded-full bg-red-600 flex items-center justify-center mx-auto mb-6">
+                <XCircle className="h-12 w-12 text-white" />
+              </div>
+              <h2 className="text-3xl font-bold text-white mb-2">Something Went Wrong</h2>
+              <p className="text-gray-400">
+                {workflow.error?.message || 'An unexpected error occurred during generation'}
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button
+                variant="outline"
+                onClick={handleGoHome}
+                className="flex-1 border-gray-700 text-gray-300 hover:bg-gray-800 h-12"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Go Back
+              </Button>
+              <Button
+                onClick={handleReset}
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white h-12"
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Try Again
+              </Button>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  )
+}

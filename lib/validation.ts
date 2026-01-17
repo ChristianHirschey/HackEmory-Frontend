@@ -4,7 +4,14 @@ import {
   DialogueLine,
   ValidationResult,
   ImageSize,
+  ImagePosition,
 } from './types'
+import {
+  isValidPositionForSize,
+  getDefaultPosition,
+  IMAGE_LIMITS,
+  getPositionsForSize,
+} from './image-positions'
 
 // ============ Constants ============
 export const ALLOWED_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif']
@@ -33,7 +40,7 @@ export function getFileExtension(filename: string): string {
 }
 
 /**
- * Check if a filename is used anywhere in the transcript (NEW: single dialogue format)
+ * Check if a filename is used anywhere in the transcript (supports both image and images)
  */
 export function isFilenameUsedInTranscript(
   transcript: { dialogue?: SingleDialogue },
@@ -41,11 +48,17 @@ export function isFilenameUsedInTranscript(
 ): boolean {
   if (!filename || !transcript.dialogue?.dialogue) return false
 
-  return transcript.dialogue.dialogue.some(line => line.image?.filename === filename)
+  return transcript.dialogue.dialogue.some(line => {
+    // Check single image
+    if (line.image?.filename === filename) return true
+    // Check images array
+    if (line.images?.some(img => img.filename === filename)) return true
+    return false
+  })
 }
 
 /**
- * Get all filenames referenced in the transcript (NEW: single dialogue format)
+ * Get all filenames referenced in the transcript (supports both image and images)
  */
 export function getAllReferencedFilenames(
   transcript: { dialogue?: SingleDialogue }
@@ -55,8 +68,17 @@ export function getAllReferencedFilenames(
   if (!transcript.dialogue?.dialogue) return filenames
 
   transcript.dialogue.dialogue.forEach(line => {
+    // Check single image
     if (line.image?.filename) {
       filenames.add(line.image.filename)
+    }
+    // Check images array
+    if (line.images) {
+      line.images.forEach(img => {
+        if (img.filename) {
+          filenames.add(img.filename)
+        }
+      })
     }
   })
 
@@ -210,8 +232,19 @@ export function validateImageConfig(
   }
 
   // Size
-  if (!['medium', 'large'].includes(image.size)) {
-    errors.push(`${lineId}: Invalid size "${image.size}" (must be "medium" or "large")`)
+  if (!['small', 'medium', 'large'].includes(image.size)) {
+    errors.push(`${lineId}: Invalid size "${image.size}" (must be "small", "medium", or "large")`)
+  }
+
+  // Position validation
+  if (image.position) {
+    if (!isValidPositionForSize(image.size, image.position)) {
+      const validPositions = getPositionsForSize(image.size)
+      errors.push(
+        `${lineId}: Position "${image.position}" is not valid for size "${image.size}". ` +
+        `Valid positions: ${validPositions.join(', ')}`
+      )
+    }
   }
 
   // Start time
@@ -249,6 +282,69 @@ export function validateImageConfig(
       }
     }
   }
+}
+
+/**
+ * Validate images array for a dialogue line (checks limits and position conflicts)
+ */
+export function validateImagesArray(
+  images: ImageConfig[],
+  lineId: string,
+  errors: string[],
+  warnings: string[]
+): void {
+  // Count images by size
+  const counts = {
+    small: images.filter(img => img.size === 'small').length,
+    medium: images.filter(img => img.size === 'medium').length,
+    large: images.filter(img => img.size === 'large').length,
+  }
+
+  // Check small limit
+  if (counts.small > IMAGE_LIMITS.maxSmall) {
+    errors.push(
+      `${lineId}: Too many small images (${counts.small}). Maximum allowed: ${IMAGE_LIMITS.maxSmall}`
+    )
+  }
+
+  // Check medium limit
+  if (counts.medium > IMAGE_LIMITS.maxMedium) {
+    errors.push(
+      `${lineId}: Too many medium images (${counts.medium}). Maximum allowed: ${IMAGE_LIMITS.maxMedium}`
+    )
+  }
+
+  // Check large limit
+  if (counts.large > IMAGE_LIMITS.maxLarge) {
+    errors.push(
+      `${lineId}: Too many large images (${counts.large}). Maximum allowed: ${IMAGE_LIMITS.maxLarge}`
+    )
+  }
+
+  // Check large/medium exclusivity
+  if (counts.large > 0 && counts.medium > 0) {
+    errors.push(
+      `${lineId}: Cannot mix large and medium images. Use either 1 large OR up to 2 medium.`
+    )
+  }
+
+  // Check for duplicate positions
+  const usedPositions = new Set<string>()
+  images.forEach((img, idx) => {
+    if (img.position) {
+      if (usedPositions.has(img.position)) {
+        errors.push(
+          `${lineId}: Duplicate position "${img.position}" used by multiple images`
+        )
+      }
+      usedPositions.add(img.position)
+    }
+  })
+
+  // Validate each individual image
+  images.forEach((img, idx) => {
+    validateImageConfig(img, `${lineId} Image ${idx + 1}`, errors, warnings)
+  })
 }
 
 /**
@@ -305,7 +401,7 @@ export function validateFilenameMatching(
 }
 
 /**
- * Comprehensive pre-upload validation (NEW: single dialogue format)
+ * Comprehensive pre-upload validation (supports both image and images)
  */
 export function validateBeforeUpload(
   transcriptId: string,
@@ -345,24 +441,36 @@ export function validateBeforeUpload(
           errors.push(`${lineId}: Invalid speaker "${line.speaker}"`)
         }
 
-        // 6. Validate image config if present
+        // 6. Validate single image if present
         if (line.image) {
           validateImageConfig(line.image, lineId, errors, warnings, line.duration_estimate)
+        }
+
+        // 7. Validate images array if present
+        if (line.images && line.images.length > 0) {
+          validateImagesArray(line.images, lineId, errors, warnings)
+        }
+
+        // 8. Warn if both image and images are present
+        if (line.image && line.images && line.images.length > 0) {
+          warnings.push(
+            `${lineId}: Both "image" and "images" are set. Backend will use "images" array.`
+          )
         }
       })
     }
   }
 
-  // 7. Validate filename matching
+  // 9. Validate filename matching
   const matchErrors = validateFilenameMatching(transcript, imageFiles)
   errors.push(...matchErrors)
 
-  // 8. Validate files
+  // 10. Validate files
   imageFiles.forEach((file, filename) => {
     validateFile(file, filename, errors, warnings)
   })
 
-  // 9. Check total upload size
+  // 11. Check total upload size
   let totalSize = 0
   imageFiles.forEach(file => {
     totalSize += file.size
