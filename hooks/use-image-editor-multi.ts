@@ -132,29 +132,48 @@ export function useImageEditorMulti(
         }
 
         // Get the line
-        const line = newTranscript.dialogue?.dialogue[lineIdx]
-        if (!line) {
+        const dialogue = newTranscript.dialogue?.dialogue
+        const line = dialogue?.[lineIdx]
+        if (!line || !dialogue) {
           console.error(`Invalid line reference: line ${lineIdx}`)
           return prevState
         }
 
-        // Initialize images array if needed
-        if (!line.images) {
-          line.images = []
-        }
-
-        // Migrate single image to images array if present
-        if (line.image) {
-          line.images.unshift(line.image)
-          delete line.image
-        }
-
-        // Add the new image
-        line.images.push({
+        // Create image config
+        const imageConfig: ImageConfig = {
           filename,
           size,
           position,
-        })
+        }
+
+        // Helper to add image to a line
+        const addImageToDialogueLine = (targetLine: DialogueLine) => {
+          if (!targetLine.images) {
+            targetLine.images = []
+          }
+          // Migrate single image to images array if present
+          if (targetLine.image) {
+            targetLine.images.unshift(targetLine.image)
+            delete targetLine.image
+          }
+          // Add the new image
+          targetLine.images.push({ ...imageConfig })
+        }
+
+        // Add to the current line
+        addImageToDialogueLine(line)
+
+        // Auto-add to subsequent "continued" lines (same speaker/emotion)
+        // This handles split dialogue lines
+        for (let i = lineIdx + 1; i < dialogue.length; i++) {
+          const nextLine = dialogue[i]
+          if (nextLine.speaker === line.speaker && nextLine.emotion === line.emotion) {
+            addImageToDialogueLine(nextLine)
+          } else {
+            // Stop when we hit a different speaker/emotion
+            break
+          }
+        }
 
         // Track file
         newFiles.set(filename, file)

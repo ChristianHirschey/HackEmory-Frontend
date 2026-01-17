@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -14,7 +13,6 @@ import {
 import {
   ChevronDown,
   ImagePlus,
-  Trash2,
   X,
   Settings2,
 } from 'lucide-react'
@@ -23,7 +21,6 @@ import {
   getSizeLabel,
   getPositionLabel,
   canAddMoreImages,
-  getAvailablePositions,
   getPositionsForSize,
 } from '@/lib/image-positions'
 import { ImageUploadFlow } from './ImageUploadFlow'
@@ -225,7 +222,6 @@ function ImageCard({
   allImages,
   calculateSpanDuration,
 }: ImageCardProps) {
-  const [spanMode, setSpanMode] = useState<'manual' | 'line-range'>('manual')
   const [spanUntilLine, setSpanUntilLine] = useState<number>(lineIdx)
 
   // Get available positions for this size (excluding positions used by other images)
@@ -323,121 +319,52 @@ function ImageCard({
       {/* Editing Controls */}
       {isEditing && (
         <div className="mt-3 pt-3 border-t border-gray-700 space-y-3">
-          {/* Position Row */}
-          <div className="grid grid-cols-3 gap-3">
-            {/* Position */}
-            <div>
-              <Label className="text-xs text-gray-500">Position</Label>
+          {/* Position */}
+          <div>
+            <Label className="text-xs text-gray-500">Position</Label>
+            <Select
+              value={image.position || undefined}
+              onValueChange={(v) => onUpdate({ position: v as ImagePosition })}
+            >
+              <SelectTrigger className="h-8 text-xs bg-gray-900 border-gray-700 w-40">
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
+              <SelectContent>
+                {availablePositions.map((pos) => (
+                  <SelectItem key={pos} value={pos}>
+                    {getPositionLabel(pos)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Show Until Line */}
+          <div>
+            <Label className="text-xs text-gray-500 mb-2 block">Show Until</Label>
+            <div className="flex items-center gap-2">
               <Select
-                value={image.position || undefined}
-                onValueChange={(v) => onUpdate({ position: v as ImagePosition })}
+                value={String(spanUntilLine)}
+                onValueChange={(v) => handleSpanLineChange(Number(v))}
               >
-                <SelectTrigger className="h-8 text-xs bg-gray-900 border-gray-700">
-                  <SelectValue placeholder="Select" />
+                <SelectTrigger className="w-36 h-8 text-xs bg-gray-900 border-gray-700">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {availablePositions.map((pos) => (
-                    <SelectItem key={pos} value={pos}>
-                      {getPositionLabel(pos)}
+                  {Array.from({ length: Math.max(1, totalLines - lineIdx) }, (_, i) => lineIdx + i).map((idx) => (
+                    <SelectItem key={idx} value={String(idx)}>
+                      Line {idx + 1}
+                      {idx === lineIdx && ' (this line only)'}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {image.duration && spanUntilLine > lineIdx && (
+                <span className="text-xs text-indigo-400">
+                  (~{image.duration.toFixed(1)}s)
+                </span>
+              )}
             </div>
-
-            {/* Start Time */}
-            <div>
-              <Label className="text-xs text-gray-500">Start (s)</Label>
-              <Input
-                type="number"
-                min="0"
-                step="0.1"
-                value={image.start_time ?? ''}
-                onChange={(e) =>
-                  onUpdate({
-                    start_time: e.target.value === '' ? undefined : Number(e.target.value),
-                  })
-                }
-                placeholder="0"
-                className="h-8 text-xs bg-gray-900 border-gray-700"
-              />
-            </div>
-
-            {/* Empty cell for alignment */}
-            <div />
-          </div>
-
-          {/* Duration Mode Toggle */}
-          <div>
-            <Label className="text-xs text-gray-500 mb-2 block">Duration</Label>
-            <div className="flex gap-2 mb-2">
-              <button
-                onClick={() => setSpanMode('manual')}
-                className={cn(
-                  'px-3 py-1.5 text-xs rounded transition-colors',
-                  spanMode === 'manual'
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-gray-800 text-gray-400 hover:text-gray-300'
-                )}
-              >
-                Manual (seconds)
-              </button>
-              <button
-                onClick={() => setSpanMode('line-range')}
-                className={cn(
-                  'px-3 py-1.5 text-xs rounded transition-colors',
-                  spanMode === 'line-range'
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-gray-800 text-gray-400 hover:text-gray-300'
-                )}
-              >
-                Span Lines
-              </button>
-            </div>
-
-            {/* Duration Input Based on Mode */}
-            {spanMode === 'manual' ? (
-              <div className="w-32">
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.1"
-                  value={image.duration ?? ''}
-                  onChange={(e) =>
-                    onUpdate({
-                      duration: e.target.value === '' ? undefined : Number(e.target.value),
-                    })
-                  }
-                  placeholder="Auto"
-                  className="h-8 text-xs bg-gray-900 border-gray-700"
-                />
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-400">Show from line {lineIdx + 1} until:</span>
-                <Select
-                  value={String(spanUntilLine)}
-                  onValueChange={(v) => handleSpanLineChange(Number(v))}
-                >
-                  <SelectTrigger className="w-32 h-8 text-xs bg-gray-900 border-gray-700">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: Math.max(1, totalLines - lineIdx) }, (_, i) => lineIdx + i).map((idx) => (
-                      <SelectItem key={idx} value={String(idx)}>
-                        Line {idx + 1}
-                        {idx === lineIdx && ' (this line)'}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {image.duration && (
-                  <span className="text-xs text-indigo-400">
-                    ({image.duration.toFixed(1)}s)
-                  </span>
-                )}
-              </div>
-            )}
           </div>
         </div>
       )}
