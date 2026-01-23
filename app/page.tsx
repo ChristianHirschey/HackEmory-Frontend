@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-
+import Link from "next/link"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Play, Sparkles, Zap, Volume2 } from "lucide-react"
@@ -72,21 +72,25 @@ export default function LandingPage() {
 
         {/* CTA Section */}
         <div className="flex flex-col sm:flex-row gap-2 mt-3">
-          <Button 
-            size="lg" 
-            className="bg-brainrot-coral hover:bg-brainrot-coral/90 text-white font-semibold px-5 py-4 rounded-full group shadow-lg shadow-brainrot-coral/25"
-          >
-            <Play className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
-            Start Creating
-          </Button>
-          <Button 
-            size="lg" 
-            variant="outline" 
-            className="border-brainrot-brown/30 hover:bg-brainrot-peach/50 text-brainrot-brown font-medium px-5 py-4 rounded-full bg-transparent"
-          >
-            <Volume2 className="w-4 h-4 mr-2" />
-            See Examples
-          </Button>
+          <Link href="/create">
+            <Button
+              size="lg"
+              className="bg-brainrot-coral hover:bg-brainrot-coral/90 text-white font-semibold px-5 py-4 rounded-full group shadow-lg shadow-brainrot-coral/25"
+            >
+              <Play className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
+              Generate My Own
+            </Button>
+          </Link>
+          <Link href="/explore">
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-brainrot-brown/30 hover:bg-brainrot-peach/50 text-brainrot-brown font-medium px-5 py-4 rounded-full bg-transparent"
+            >
+              <Volume2 className="w-4 h-4 mr-2" />
+              See Examples
+            </Button>
+          </Link>
         </div>
 
         {/* Features Strip */}
