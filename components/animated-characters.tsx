@@ -72,14 +72,14 @@ export function AnimatedCharacters({ mounted }: AnimatedCharactersProps) {
           
           {/* Peter Image - Larger */}
           {peterError ? (
-            <CharacterPlaceholder name="peter" className="w-44 md:w-56 lg:w-72 h-56 md:h-72 lg:h-96" />
+            <CharacterPlaceholder name="peter" className="w-64 md:w-80 lg:w-96 h-80 md:h-96 lg:h-[28rem]" />
           ) : (
             <Image
               src="/characters/peter.png"
               alt="Peter Griffin peeking"
-              width={400}
-              height={500}
-              className="w-44 md:w-56 lg:w-72 h-auto drop-shadow-2xl"
+              width={900}
+              height={900}
+              className="w-64 md:w-80 lg:w-96 h-auto drop-shadow-2xl"
               priority
               onError={() => setPeterError(true)}
             />
