@@ -9,11 +9,26 @@ interface AnimatedCharactersProps {
   mounted: boolean
 }
 
+// Fallback placeholder for missing character images
+function CharacterPlaceholder({ name, className }: { name: string; className?: string }) {
+  return (
+    <div
+      className={`flex items-center justify-center bg-gradient-to-br from-brainrot-peach/50 to-brainrot-orange/30 border-2 border-dashed border-brainrot-coral/40 rounded-[40%_40%_35%_35%] ${className}`}
+    >
+      <span className="text-brainrot-coral/60 text-xs font-medium text-center px-2">
+        Add {name}.png<br/>to /public/images/
+      </span>
+    </div>
+  )
+}
+
 export function AnimatedCharacters({ mounted }: AnimatedCharactersProps) {
   const [showPeter, setShowPeter] = useState(false)
   const [showStewie, setShowStewie] = useState(false)
   const [showPeterBubble, setShowPeterBubble] = useState(false)
   const [showStewieBubble, setShowStewieBubble] = useState(false)
+  const [peterError, setPeterError] = useState(false)
+  const [stewieError, setStewieError] = useState(false)
 
   useEffect(() => {
     if (!mounted) return
@@ -56,14 +71,19 @@ export function AnimatedCharacters({ mounted }: AnimatedCharactersProps) {
           </div>
           
           {/* Peter Image - Larger */}
-          <Image
-            src="/images/gemini-generated-image-7cg9pr7cg9pr7cg9.png"
-            alt="Peter Griffin peeking"
-            width={400}
-            height={500}
-            className="w-44 md:w-56 lg:w-72 h-auto drop-shadow-2xl"
-            priority
-          />
+          {peterError ? (
+            <CharacterPlaceholder name="peter" className="w-44 md:w-56 lg:w-72 h-56 md:h-72 lg:h-96" />
+          ) : (
+            <Image
+              src="/images/peter.png"
+              alt="Peter Griffin peeking"
+              width={400}
+              height={500}
+              className="w-44 md:w-56 lg:w-72 h-auto drop-shadow-2xl"
+              priority
+              onError={() => setPeterError(true)}
+            />
+          )}
         </div>
       </div>
 
@@ -90,14 +110,19 @@ export function AnimatedCharacters({ mounted }: AnimatedCharactersProps) {
           </div>
           
           {/* Stewie Image */}
-          <Image
-            src="/images/stewie.png"
-            alt="Stewie Griffin"
-            width={240}
-            height={320}
-            className="w-32 md:w-40 lg:w-48 h-auto drop-shadow-2xl"
-            priority
-          />
+          {stewieError ? (
+            <CharacterPlaceholder name="stewie" className="w-32 md:w-40 lg:w-48 h-44 md:h-52 lg:h-64" />
+          ) : (
+            <Image
+              src="/images/stewie.png"
+              alt="Stewie Griffin"
+              width={240}
+              height={320}
+              className="w-32 md:w-40 lg:w-48 h-auto drop-shadow-2xl"
+              priority
+              onError={() => setStewieError(true)}
+            />
+          )}
         </div>
       </div>
     </>
