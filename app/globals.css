@@ -39,13 +39,41 @@
   * {
     @apply border-border;
   }
-  
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
-  
+
   /* Hide scrollbar for Instagram-style feed */
   .snap-y::-webkit-scrollbar {
     display: none;
   }
+}
+
+/* Landing page character animations */
+@keyframes float-gentle {
+  0%, 100% {
+    transform: translateY(0) translateX(-25%);
+  }
+  50% {
+    transform: translateY(-10px) translateX(-25%);
+  }
+}
+
+@keyframes float-gentle-right {
+  0%, 100% {
+    transform: translateY(15%);
+  }
+  50% {
+    transform: translateY(12%);
+  }
+}
+
+.animate-float-peter {
+  animation: float-gentle 6s ease-in-out infinite;
+}
+
+.animate-float-stewie {
+  animation: float-gentle-right 5s ease-in-out infinite;
+  animation-delay: 1s;
 }
