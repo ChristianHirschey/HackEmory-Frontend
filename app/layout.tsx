@@ -2,6 +2,7 @@ import React from "react"
 import type { Metadata } from 'next'
 import { Space_Grotesk, Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { Providers } from './providers'
 import './globals.css'
 
 const _spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: '--font-heading' });
@@ -37,8 +38,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`font-sans antialiased`}>
-        {children}
+      <body className={`font-sans antialiased ${_spaceGrotesk.variable}`}>
+        <Providers>
+          {children}
+        </Providers>
         <Analytics />
       </body>
     </html>
