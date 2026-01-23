@@ -16,7 +16,7 @@ function CharacterPlaceholder({ name, className }: { name: string; className?: s
       className={`flex items-center justify-center bg-gradient-to-br from-brainrot-peach/50 to-brainrot-orange/30 border-2 border-dashed border-brainrot-coral/40 rounded-[40%_40%_35%_35%] ${className}`}
     >
       <span className="text-brainrot-coral/60 text-xs font-medium text-center px-2">
-        Add {name}.png<br/>to /public/images/
+        Add {name}.png<br/>to /public/characters/
       </span>
     </div>
   )
@@ -75,7 +75,7 @@ export function AnimatedCharacters({ mounted }: AnimatedCharactersProps) {
             <CharacterPlaceholder name="peter" className="w-44 md:w-56 lg:w-72 h-56 md:h-72 lg:h-96" />
           ) : (
             <Image
-              src="/images/peter.png"
+              src="/characters/peter.png"
               alt="Peter Griffin peeking"
               width={400}
               height={500}
@@ -114,7 +114,7 @@ export function AnimatedCharacters({ mounted }: AnimatedCharactersProps) {
             <CharacterPlaceholder name="stewie" className="w-32 md:w-40 lg:w-48 h-44 md:h-52 lg:h-64" />
           ) : (
             <Image
-              src="/images/stewie.png"
+              src="/characters/stewie.png"
               alt="Stewie Griffin"
               width={240}
               height={320}
