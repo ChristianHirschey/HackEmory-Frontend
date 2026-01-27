@@ -124,13 +124,13 @@ export function ImageUploadFlow({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleReset}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto bg-gray-900 border-gray-800 text-white">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto bg-background border-brainrot-orange/20 text-foreground">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Upload className="h-5 w-5 text-indigo-400" />
+          <DialogTitle className="flex items-center gap-2 text-brainrot-brown">
+            <Upload className="h-5 w-5 text-brainrot-coral" />
             Add Image
           </DialogTitle>
-          <DialogDescription className="text-gray-400">
+          <DialogDescription className="text-foreground/60">
             {step === 'size' && 'Step 1: Choose image size'}
             {step === 'upload' && 'Step 2: Upload your image'}
             {step === 'position' && 'Step 3: Select position'}
@@ -141,7 +141,7 @@ export function ImageUploadFlow({
           {/* Step 1: Size Selection */}
           {step === 'size' && (
             <div className="space-y-4">
-              <p className="text-sm text-gray-400 mb-4">
+              <p className="text-sm text-foreground/60 mb-4">
                 Choose a size for your educational image:
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -154,20 +154,20 @@ export function ImageUploadFlow({
                       disabled={!isAllowed}
                       className={`p-3 rounded-lg border-2 transition-all text-left ${
                         isAllowed
-                          ? 'border-gray-700 hover:border-indigo-500 hover:bg-gray-800 cursor-pointer'
-                          : 'border-gray-800 bg-gray-800/50 cursor-not-allowed opacity-50'
+                          ? 'border-brainrot-orange/30 hover:border-brainrot-coral hover:bg-brainrot-peach/30 cursor-pointer'
+                          : 'border-brainrot-orange/20 bg-brainrot-peach/20 cursor-not-allowed opacity-50'
                       }`}
                     >
-                      <div className={`text-base font-semibold ${isAllowed ? 'text-white' : 'text-gray-500'}`}>
+                      <div className={`text-base font-semibold ${isAllowed ? 'text-brainrot-brown' : 'text-brainrot-brown/50'}`}>
                         {size.charAt(0).toUpperCase() + size.slice(1)}
                       </div>
-                      <div className="text-xs text-gray-400 mt-1">
+                      <div className="text-xs text-foreground/60 mt-1">
                         {size === 'small' && '300px'}
                         {size === 'medium' && '540px'}
                         {size === 'large' && '800px'}
                       </div>
                       {!isAllowed && (
-                        <div className="text-xs text-red-400 mt-1">
+                        <div className="text-xs text-red-500 mt-1">
                           Limit reached
                         </div>
                       )}
@@ -192,18 +192,18 @@ export function ImageUploadFlow({
               {!selectedFile ? (
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-gray-700 rounded-lg p-6 text-center hover:border-indigo-500 transition-colors cursor-pointer"
+                  className="border-2 border-dashed border-brainrot-orange/30 rounded-lg p-6 text-center hover:border-brainrot-coral transition-colors cursor-pointer bg-white/50"
                 >
-                  <Upload className="h-10 w-10 text-gray-500 mx-auto mb-2" />
-                  <p className="text-white font-medium">Click to upload</p>
-                  <p className="text-sm text-gray-400 mt-1">
+                  <Upload className="h-10 w-10 text-brainrot-orange/60 mx-auto mb-2" />
+                  <p className="text-brainrot-brown font-medium">Click to upload</p>
+                  <p className="text-sm text-foreground/60 mt-1">
                     PNG, JPG, JPEG, or GIF (max 10MB)
                   </p>
                 </div>
               ) : (
-                <div className="flex items-start gap-3 p-3 bg-gray-800 rounded-lg">
+                <div className="flex items-start gap-3 p-3 bg-white/60 border border-brainrot-orange/20 rounded-lg">
                   {previewUrl && (
-                    <div className="w-20 h-20 rounded overflow-hidden bg-gray-700 shrink-0">
+                    <div className="w-20 h-20 rounded overflow-hidden bg-brainrot-peach shrink-0">
                       <img
                         src={previewUrl}
                         alt="Preview"
@@ -212,11 +212,11 @@ export function ImageUploadFlow({
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-medium truncate text-sm">{selectedFile.name}</p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-brainrot-brown font-medium truncate text-sm">{selectedFile.name}</p>
+                    <p className="text-xs text-foreground/60">
                       {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                     </p>
-                    <p className="text-xs text-indigo-400 mt-1">
+                    <p className="text-xs text-brainrot-coral mt-1">
                       Size: {getSizeLabel(selectedSize!)}
                     </p>
                   </div>
@@ -228,7 +228,7 @@ export function ImageUploadFlow({
                         setPreviewUrl(null)
                       }
                     }}
-                    className="p-1 text-gray-400 hover:text-red-400 transition-colors"
+                    className="p-1 text-brainrot-brown/50 hover:text-red-500 transition-colors"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -240,9 +240,9 @@ export function ImageUploadFlow({
           {/* Step 3: Position Selection */}
           {step === 'position' && selectedSize && (
             <div className="space-y-4">
-              <div className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg">
+              <div className="flex items-center gap-3 p-3 bg-white/60 border border-brainrot-orange/20 rounded-lg">
                 {previewUrl && (
-                  <div className="w-12 h-12 rounded overflow-hidden bg-gray-700 shrink-0">
+                  <div className="w-12 h-12 rounded overflow-hidden bg-brainrot-peach shrink-0">
                     <img
                       src={previewUrl}
                       alt="Preview"
@@ -251,19 +251,19 @@ export function ImageUploadFlow({
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-white font-medium text-sm truncate">{selectedFile?.name}</p>
-                  <p className="text-xs text-indigo-400">{getSizeLabel(selectedSize)}</p>
+                  <p className="text-brainrot-brown font-medium text-sm truncate">{selectedFile?.name}</p>
+                  <p className="text-xs text-brainrot-coral">{getSizeLabel(selectedSize)}</p>
                 </div>
               </div>
 
               {/* Position dropdown - simpler layout */}
               <div>
-                <Label className="text-gray-400 text-sm mb-2 block">Select Position</Label>
+                <Label className="text-brainrot-brown/70 text-sm mb-2 block">Select Position</Label>
                 <Select
                   value={selectedPosition || undefined}
                   onValueChange={(v) => setSelectedPosition(v as ImagePosition)}
                 >
-                  <SelectTrigger className="bg-gray-800 border-gray-700 w-full">
+                  <SelectTrigger className="bg-white border-brainrot-orange/30 w-full">
                     <SelectValue placeholder="Select position" />
                   </SelectTrigger>
                   <SelectContent>
@@ -274,7 +274,7 @@ export function ImageUploadFlow({
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-brainrot-brown/50 mt-2">
                   {selectedSize === 'small' && 'Small images appear in the lower right area'}
                   {selectedSize === 'medium' && 'Medium images appear at top or bottom corners'}
                   {selectedSize === 'large' && 'Large images appear at the top center'}
@@ -285,12 +285,12 @@ export function ImageUploadFlow({
         </div>
 
         {/* Actions - always visible at bottom */}
-        <div className="flex gap-3 pt-4 border-t border-gray-800 sticky bottom-0 bg-gray-900">
+        <div className="flex gap-3 pt-4 border-t border-brainrot-orange/20 sticky bottom-0 bg-background">
           {step !== 'size' && (
             <Button
               variant="outline"
               onClick={handleBack}
-              className="border-gray-700 text-gray-300 hover:bg-gray-800"
+              className="border-brainrot-brown/30 text-brainrot-brown hover:bg-brainrot-peach/50"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
@@ -301,7 +301,7 @@ export function ImageUploadFlow({
             <Button
               variant="outline"
               onClick={handleReset}
-              className="flex-1 border-gray-700 text-gray-300 hover:bg-gray-800"
+              className="flex-1 border-brainrot-brown/30 text-brainrot-brown hover:bg-brainrot-peach/50"
             >
               Cancel
             </Button>
@@ -311,7 +311,7 @@ export function ImageUploadFlow({
             <Button
               onClick={() => setStep('position')}
               disabled={!selectedFile}
-              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+              className="flex-1 bg-brainrot-coral hover:bg-brainrot-coral/90 text-white shadow-lg shadow-brainrot-coral/25"
             >
               Next
               <ArrowRight className="h-4 w-4 ml-2" />
@@ -322,7 +322,7 @@ export function ImageUploadFlow({
             <Button
               onClick={handleComplete}
               disabled={!selectedPosition}
-              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+              className="flex-1 bg-brainrot-coral hover:bg-brainrot-coral/90 text-white shadow-lg shadow-brainrot-coral/25"
             >
               <Check className="h-4 w-4 mr-2" />
               Add Image

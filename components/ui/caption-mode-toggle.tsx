@@ -38,27 +38,27 @@ export function CaptionModeToggle({
       <div className="flex items-center gap-2">
         <Label
           htmlFor="karaoke-mode"
-          className="text-sm font-medium text-gray-200 cursor-pointer"
+          className="text-sm font-medium text-brainrot-brown cursor-pointer"
         >
           Karaoke Captions
         </Label>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Info className="h-4 w-4 text-gray-500 cursor-help" />
+              <Info className="h-4 w-4 text-brainrot-brown/50 cursor-help" />
             </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-xs bg-gray-800 border-gray-700">
+            <TooltipContent side="top" className="max-w-xs bg-white border-brainrot-orange/20">
               <div className="space-y-2 p-1">
-                <p className="font-semibold text-white">Caption Modes:</p>
+                <p className="font-semibold text-brainrot-brown">Caption Modes:</p>
                 <div>
-                  <p className="text-sm font-medium text-indigo-400">Karaoke (ON):</p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-sm font-medium text-brainrot-coral">Karaoke (ON):</p>
+                  <p className="text-xs text-foreground/60">
                     Words highlight yellow one-by-one as they&apos;re spoken
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-300">Box Captions (OFF):</p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-sm font-medium text-brainrot-brown">Box Captions (OFF):</p>
+                  <p className="text-xs text-foreground/60">
                     Traditional white text in black boxes
                   </p>
                 </div>
@@ -71,19 +71,19 @@ export function CaptionModeToggle({
       <div className="flex items-center gap-3">
         {/* Preview indicator */}
         {enabled && (
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-brainrot-brown/50">
             Words will{' '}
-            <span className="text-yellow-400 font-semibold">highlight</span>{' '}
+            <span className="text-brainrot-yellow font-semibold">highlight</span>{' '}
             as spoken
           </span>
         )}
-        
+
         <Switch
           id="karaoke-mode"
           checked={enabled}
           onCheckedChange={onChange}
           disabled={disabled}
-          className="data-[state=checked]:bg-indigo-600"
+          className="data-[state=checked]:bg-brainrot-coral"
         />
       </div>
     </div>
@@ -105,11 +105,11 @@ export function CaptionModeToggleCompact({
         checked={enabled}
         onCheckedChange={onChange}
         disabled={disabled}
-        className="data-[state=checked]:bg-indigo-600 scale-75"
+        className="data-[state=checked]:bg-brainrot-coral scale-75"
       />
       <Label
         htmlFor="karaoke-mode-compact"
-        className="text-xs text-gray-400 cursor-pointer"
+        className="text-xs text-brainrot-brown/60 cursor-pointer"
       >
         {enabled ? 'Karaoke' : 'Box captions'}
       </Label>

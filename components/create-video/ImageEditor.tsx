@@ -50,6 +50,10 @@ export function ImageEditor({
     editor.updateImageInLine(lineIdx, imageIdx, updates)
   }
 
+  const handleSpanImage = (lineIdx: number, imageIdx: number, targetLineIdx: number) => {
+    editor.spanImageToLines(lineIdx, imageIdx, targetLineIdx)
+  }
+
   const handleGenerate = () => {
     const validation = editor.validate()
     if (!validation.valid) {
@@ -96,12 +100,12 @@ export function ImageEditor({
 
         {/* Dialogue Title */}
         {dialogue?.title && (
-          <div className="mb-4 p-3 bg-gray-800 rounded-lg">
-            <h3 className="font-medium text-white">{dialogue.title}</h3>
-            <p className="text-sm text-gray-400 mt-1">
+          <div className="mb-4 p-3 bg-white/60 backdrop-blur-sm border border-brainrot-orange/20 rounded-lg">
+            <h3 className="font-medium text-brainrot-brown">{dialogue.title}</h3>
+            <p className="text-sm text-foreground/60 mt-1">
               {dialogue.dialogue.length} dialogue lines
               {editor.hasImages() && (
-                <span className="ml-2 text-indigo-400">
+                <span className="ml-2 text-brainrot-coral">
                   ({editor.getImageFiles().length} images)
                 </span>
               )}
@@ -118,7 +122,7 @@ export function ImageEditor({
                 onClick={() => setSelectedLineIdx(lineIdx)}
                 className={`cursor-pointer transition-all ${
                   selectedLineIdx === lineIdx
-                    ? 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-gray-900 rounded-lg'
+                    ? 'ring-2 ring-brainrot-coral ring-offset-2 ring-offset-background rounded-lg'
                     : ''
                 }`}
               >
@@ -131,6 +135,7 @@ export function ImageEditor({
                   onAddImage={(file, size, position) => handleAddImage(lineIdx, file, size, position)}
                   onRemoveImage={(imgIdx) => handleRemoveImage(lineIdx, imgIdx)}
                   onUpdateImage={(imgIdx, updates) => handleUpdateImage(lineIdx, imgIdx, updates)}
+                  onSpanImage={(imgIdx, targetLineIdx) => handleSpanImage(lineIdx, imgIdx, targetLineIdx)}
                   calculateSpanDuration={editor.calculateSpanDuration}
                 />
               </div>
@@ -139,14 +144,14 @@ export function ImageEditor({
         </ScrollArea>
 
         {/* Summary & Actions */}
-        <div className="mt-4 pt-4 border-t border-gray-800">
+        <div className="mt-4 pt-4 border-t border-brainrot-orange/20">
           {/* Caption Mode Toggle */}
           <div className="mb-4">
             <CaptionModeToggle enabled={karaokeMode} onChange={setKaraokeMode} />
           </div>
 
           <div className="flex items-center justify-between mb-4">
-            <div className="text-sm text-gray-400">
+            <div className="text-sm text-foreground/60">
               {editor.hasImages() ? (
                 <span>
                   {editor.getImageFiles().length} image
@@ -161,7 +166,7 @@ export function ImageEditor({
                 variant="ghost"
                 size="sm"
                 onClick={() => editor.clearAllImages()}
-                className="text-gray-400 hover:text-red-400"
+                className="text-brainrot-brown/60 hover:text-red-500"
               >
                 <Trash2 className="h-4 w-4 mr-1" />
                 Clear all
@@ -173,7 +178,7 @@ export function ImageEditor({
             <Button
               variant="outline"
               onClick={onBack}
-              className="border-gray-700 text-gray-300 hover:bg-gray-800"
+              className="border-brainrot-brown/30 text-brainrot-brown hover:bg-brainrot-peach/50"
               disabled={isGenerating}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -181,7 +186,7 @@ export function ImageEditor({
             </Button>
             <Button
               onClick={handleGenerate}
-              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+              className="flex-1 bg-brainrot-coral hover:bg-brainrot-coral/90 text-white shadow-lg shadow-brainrot-coral/25"
               disabled={isGenerating || !validation.valid}
             >
               {isGenerating ? (
@@ -203,7 +208,7 @@ export function ImageEditor({
       {/* Right Column: Position Preview */}
       <div className="lg:w-80 shrink-0">
         <div className="sticky top-4">
-          <h3 className="text-sm font-medium text-gray-400 mb-3">
+          <h3 className="text-sm font-medium text-brainrot-brown/70 mb-3">
             {selectedLineIdx !== null
               ? `Line ${selectedLineIdx + 1} Preview`
               : 'Video Layout Preview'}
@@ -213,7 +218,7 @@ export function ImageEditor({
             previewUrls={editor.state.imagePreviewUrls}
             interactive={false}
           />
-          <p className="mt-4 text-xs text-gray-500 text-center">
+          <p className="mt-4 text-xs text-brainrot-brown/50 text-center">
             Click a dialogue line on the left to see its images in context
           </p>
         </div>

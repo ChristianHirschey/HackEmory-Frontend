@@ -79,7 +79,7 @@ export function AnimatedCharacters({ mounted }: AnimatedCharactersProps) {
               alt="Peter Griffin peeking"
               width={900}
               height={900}
-              className="w-64 md:w-80 lg:w-96 h-auto drop-shadow-2xl"
+              className="w-10 md:w-20 lg:w-30 h-auto drop-shadow-2xl"
               priority
               onError={() => setPeterError(true)}
             />

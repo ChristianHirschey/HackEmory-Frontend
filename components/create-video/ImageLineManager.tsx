@@ -41,6 +41,8 @@ interface ImageLineManagerProps {
   onRemoveImage: (imageIdx: number) => void
   /** Update image config */
   onUpdateImage: (imageIdx: number, updates: Partial<ImageConfig>) => void
+  /** Span image to multiple lines */
+  onSpanImage?: (imageIdx: number, targetLineIdx: number) => void
   /** Update caption */
   onUpdateCaption?: (caption: string) => void
   /** Calculate duration from lineIdx to targetLineIdx (for image spanning) */
@@ -56,6 +58,7 @@ export function ImageLineManager({
   onAddImage,
   onRemoveImage,
   onUpdateImage,
+  onSpanImage,
   onUpdateCaption,
   calculateSpanDuration,
 }: ImageLineManagerProps) {
@@ -80,26 +83,26 @@ export function ImageLineManager({
   const hasImages = allImages.length > 0
 
   return (
-    <div className="bg-gray-850 border border-gray-700 rounded-lg overflow-hidden">
+    <div className="bg-white/60 backdrop-blur-sm border border-brainrot-orange/20 rounded-lg overflow-hidden">
       {/* Line Header */}
       <div className="p-3">
         <div className="flex items-start gap-3">
           {/* Line Number */}
-          <span className="text-xs text-gray-500 font-mono w-6 text-right shrink-0">
+          <span className="text-xs text-brainrot-brown/50 font-mono w-6 text-right shrink-0">
             {lineIdx + 1}
           </span>
 
           {/* Speaker Badge */}
           <div className="flex items-center gap-1 shrink-0">
             {isContinued && (
-              <span className="text-xs text-gray-500">↳</span>
+              <span className="text-xs text-brainrot-brown/50">↳</span>
             )}
             <span
               className={cn(
                 'px-2 py-0.5 text-xs font-medium rounded',
                 line.speaker === 'PETER'
-                  ? 'bg-blue-500/20 text-blue-400'
-                  : 'bg-purple-500/20 text-purple-400'
+                  ? 'bg-blue-500/20 text-blue-600'
+                  : 'bg-purple-500/20 text-purple-600'
               )}
             >
               {line.speaker}
@@ -107,13 +110,13 @@ export function ImageLineManager({
           </div>
 
           {/* Caption */}
-          <p className="flex-1 text-sm text-gray-300 line-clamp-2">{line.caption}</p>
+          <p className="flex-1 text-sm text-brainrot-brown line-clamp-2">{line.caption}</p>
 
           {/* Image Indicator / Add Button */}
           {hasImages ? (
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="flex items-center gap-1 px-2 py-1 bg-indigo-500/20 text-indigo-400 text-xs rounded hover:bg-indigo-500/30 transition-colors"
+              className="flex items-center gap-1 px-2 py-1 bg-brainrot-coral/20 text-brainrot-coral text-xs rounded hover:bg-brainrot-coral/30 transition-colors"
             >
               <ImagePlus className="h-3 w-3" />
               {allImages.length} Image{allImages.length > 1 ? 's' : ''}
@@ -124,7 +127,7 @@ export function ImageLineManager({
           ) : (
             <button
               onClick={() => setIsUploadOpen(true)}
-              className="flex items-center gap-1 px-2 py-1 text-gray-500 text-xs rounded border border-gray-700 hover:border-indigo-500 hover:text-indigo-400 transition-colors"
+              className="flex items-center gap-1 px-2 py-1 text-brainrot-brown/50 text-xs rounded border border-brainrot-orange/30 hover:border-brainrot-coral hover:text-brainrot-coral transition-colors"
             >
               <ImagePlus className="h-3 w-3" />
               Add Image
@@ -133,7 +136,7 @@ export function ImageLineManager({
         </div>
 
         {line.duration_estimate && (
-          <span className="text-xs text-gray-500 mt-1 block ml-9">
+          <span className="text-xs text-brainrot-brown/50 mt-1 block ml-9">
             ~{line.duration_estimate.toFixed(1)}s
           </span>
         )}
@@ -141,7 +144,7 @@ export function ImageLineManager({
 
       {/* Expanded Image List */}
       {hasImages && isExpanded && (
-        <div className="px-3 pb-3 pt-2 border-t border-gray-700 bg-gray-900/50 space-y-3">
+        <div className="px-3 pb-3 pt-2 border-t border-brainrot-orange/20 bg-brainrot-peach/30 space-y-3">
           {allImages.map((img, imgIdx) => (
             <ImageCard
               key={`${img.filename}-${imgIdx}`}
@@ -154,6 +157,7 @@ export function ImageLineManager({
               onEdit={() => setEditingImageIdx(editingImageIdx === imgIdx ? null : imgIdx)}
               onRemove={() => onRemoveImage(imgIdx)}
               onUpdate={(updates) => onUpdateImage(imgIdx, updates)}
+              onSpanImage={onSpanImage ? (targetLineIdx) => onSpanImage(imgIdx, targetLineIdx) : undefined}
               allImages={allImages}
               calculateSpanDuration={calculateSpanDuration}
             />
@@ -165,11 +169,11 @@ export function ImageLineManager({
               variant="outline"
               size="sm"
               onClick={() => setIsUploadOpen(true)}
-              className="w-full border-dashed border-gray-700 text-gray-400 hover:text-indigo-400 hover:border-indigo-500"
+              className="w-full border-dashed border-brainrot-orange/30 text-brainrot-brown/60 hover:text-brainrot-coral hover:border-brainrot-coral"
             >
               <ImagePlus className="h-4 w-4 mr-2" />
               Add Another Image
-              <span className="ml-2 text-xs text-gray-500">
+              <span className="ml-2 text-xs text-brainrot-brown/50">
                 ({allowedSizes.join(', ')} available)
               </span>
             </Button>
@@ -205,6 +209,7 @@ interface ImageCardProps {
   onEdit: () => void
   onRemove: () => void
   onUpdate: (updates: Partial<ImageConfig>) => void
+  onSpanImage?: (targetLineIdx: number) => void
   allImages: ImageConfig[]
   calculateSpanDuration?: (startLineIdx: number, endLineIdx: number) => number
 }
@@ -219,6 +224,7 @@ function ImageCard({
   onEdit,
   onRemove,
   onUpdate,
+  onSpanImage,
   allImages,
   calculateSpanDuration,
 }: ImageCardProps) {
@@ -235,9 +241,14 @@ function ImageCard({
     (pos) => !usedPositions.includes(pos) || pos === image.position
   )
 
-  // Handle span line change
+  // Handle span line change - this adds the image to all lines in the range
   const handleSpanLineChange = (targetLine: number) => {
     setSpanUntilLine(targetLine)
+    // Call spanImageToLines to actually add the image to subsequent lines
+    if (onSpanImage) {
+      onSpanImage(targetLine)
+    }
+    // Also update duration for display purposes
     if (calculateSpanDuration) {
       const duration = calculateSpanDuration(lineIdx, targetLine)
       onUpdate({ duration })
@@ -245,11 +256,11 @@ function ImageCard({
   }
 
   return (
-    <div className="bg-gray-800 rounded-lg p-3">
+    <div className="bg-white/80 border border-brainrot-orange/20 rounded-lg p-3">
       <div className="flex items-start gap-3">
         {/* Preview Thumbnail */}
         {previewUrl && (
-          <div className="w-16 h-16 rounded overflow-hidden bg-gray-700 shrink-0">
+          <div className="w-16 h-16 rounded overflow-hidden bg-brainrot-peach shrink-0">
             <img
               src={previewUrl}
               alt={image.filename}
@@ -261,12 +272,12 @@ function ImageCard({
         {/* Image Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-white truncate max-w-[150px]">
+            <span className="text-sm text-brainrot-brown truncate max-w-[150px]">
               {image.filename}
             </span>
             <button
               onClick={onRemove}
-              className="p-1 text-gray-500 hover:text-red-400 transition-colors"
+              className="p-1 text-brainrot-brown/50 hover:text-red-500 transition-colors"
               title="Remove image"
             >
               <X className="h-4 w-4" />
@@ -278,9 +289,9 @@ function ImageCard({
             <span
               className={cn(
                 'px-2 py-0.5 text-xs rounded',
-                image.size === 'small' && 'bg-green-500/20 text-green-400',
-                image.size === 'medium' && 'bg-blue-500/20 text-blue-400',
-                image.size === 'large' && 'bg-purple-500/20 text-purple-400'
+                image.size === 'small' && 'bg-green-500/20 text-green-600',
+                image.size === 'medium' && 'bg-blue-500/20 text-blue-600',
+                image.size === 'large' && 'bg-purple-500/20 text-purple-600'
               )}
             >
               {getSizeLabel(image.size, image.position)}
@@ -288,14 +299,14 @@ function ImageCard({
 
             {/* Position Badge */}
             {image.position && (
-              <span className="px-2 py-0.5 text-xs bg-gray-700 text-gray-300 rounded">
+              <span className="px-2 py-0.5 text-xs bg-brainrot-peach text-brainrot-brown rounded">
                 {getPositionLabel(image.position)}
               </span>
             )}
           </div>
 
           {/* Timing Summary */}
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-brainrot-brown/50 mt-1">
             {image.start_time ? `Starts at ${image.start_time}s` : 'Starts immediately'} •{' '}
             {image.duration ? `Shows for ${image.duration}s` : 'Shows for full line'}
           </p>
@@ -307,8 +318,8 @@ function ImageCard({
           className={cn(
             'p-1.5 rounded transition-colors',
             isEditing
-              ? 'bg-indigo-500/20 text-indigo-400'
-              : 'text-gray-500 hover:text-gray-300'
+              ? 'bg-brainrot-coral/20 text-brainrot-coral'
+              : 'text-brainrot-brown/50 hover:text-brainrot-brown'
           )}
           title="Edit settings"
         >
@@ -318,15 +329,15 @@ function ImageCard({
 
       {/* Editing Controls */}
       {isEditing && (
-        <div className="mt-3 pt-3 border-t border-gray-700 space-y-3">
+        <div className="mt-3 pt-3 border-t border-brainrot-orange/20 space-y-3">
           {/* Position */}
           <div>
-            <Label className="text-xs text-gray-500">Position</Label>
+            <Label className="text-xs text-brainrot-brown/60">Position</Label>
             <Select
               value={image.position || undefined}
               onValueChange={(v) => onUpdate({ position: v as ImagePosition })}
             >
-              <SelectTrigger className="h-8 text-xs bg-gray-900 border-gray-700 w-40">
+              <SelectTrigger className="h-8 text-xs bg-white border-brainrot-orange/30 w-40">
                 <SelectValue placeholder="Select" />
               </SelectTrigger>
               <SelectContent>
@@ -341,13 +352,13 @@ function ImageCard({
 
           {/* Show Until Line */}
           <div>
-            <Label className="text-xs text-gray-500 mb-2 block">Show Until</Label>
+            <Label className="text-xs text-brainrot-brown/60 mb-2 block">Show Until</Label>
             <div className="flex items-center gap-2">
               <Select
                 value={String(spanUntilLine)}
                 onValueChange={(v) => handleSpanLineChange(Number(v))}
               >
-                <SelectTrigger className="w-36 h-8 text-xs bg-gray-900 border-gray-700">
+                <SelectTrigger className="w-36 h-8 text-xs bg-white border-brainrot-orange/30">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -360,7 +371,7 @@ function ImageCard({
                 </SelectContent>
               </Select>
               {image.duration && spanUntilLine > lineIdx && (
-                <span className="text-xs text-indigo-400">
+                <span className="text-xs text-brainrot-coral">
                   (~{image.duration.toFixed(1)}s)
                 </span>
               )}

@@ -100,30 +100,30 @@ export function ImagePositionGrid({
     <div className={cn('relative', className)}>
       {/* Phone Frame */}
       <div
-        className="relative bg-gray-900 rounded-2xl border-2 border-gray-700 overflow-hidden mx-auto"
+        className="relative bg-brainrot-brown/90 rounded-2xl border-2 border-brainrot-orange/30 overflow-hidden mx-auto"
         style={{
           aspectRatio: `${VIDEO_WIDTH} / ${VIDEO_HEIGHT}`,
           maxHeight: '500px',
         }}
       >
         {/* Background gradient to simulate video */}
-        <div className="absolute inset-0 bg-gradient-to-b from-gray-800 to-gray-900" />
+        <div className="absolute inset-0 bg-gradient-to-b from-brainrot-brown/80 to-brainrot-brown/95" />
 
         {/* Character silhouettes (left side) */}
         <div className="absolute bottom-0 left-0 w-1/3 h-2/5 flex items-end">
           <div className="relative w-full h-full">
             {/* Peter silhouette */}
-            <div className="absolute bottom-0 left-2 w-16 h-32 bg-gray-700/50 rounded-t-full" />
+            <div className="absolute bottom-0 left-2 w-16 h-32 bg-brainrot-peach/30 rounded-t-full" />
             {/* Stewie silhouette */}
-            <div className="absolute bottom-0 left-12 w-10 h-20 bg-gray-600/50 rounded-t-full" />
+            <div className="absolute bottom-0 left-12 w-10 h-20 bg-brainrot-peach/20 rounded-t-full" />
           </div>
         </div>
 
         {/* Caption area */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4">
-          <div className="bg-gray-800/50 rounded-lg p-3 text-center">
-            <div className="h-2 bg-gray-600/50 rounded w-3/4 mx-auto mb-2" />
-            <div className="h-2 bg-gray-600/50 rounded w-1/2 mx-auto" />
+          <div className="bg-brainrot-peach/30 rounded-lg p-3 text-center">
+            <div className="h-2 bg-brainrot-peach/40 rounded w-3/4 mx-auto mb-2" />
+            <div className="h-2 bg-brainrot-peach/40 rounded w-1/2 mx-auto" />
           </div>
         </div>
 
@@ -155,7 +155,7 @@ export function ImagePositionGrid({
                   ? cn(colors.active, 'cursor-pointer')
                   : isAvailable
                   ? cn(colors.bg, colors.border, colors.hover, 'cursor-pointer')
-                  : 'bg-gray-800/30 border-gray-700/50 cursor-not-allowed opacity-50'
+                  : 'bg-brainrot-peach/20 border-brainrot-orange/30 cursor-not-allowed opacity-50'
               )}
               style={{
                 left: `${slot.x}%`,
@@ -174,7 +174,7 @@ export function ImagePositionGrid({
                 />
               ) : (
                 // Show position label
-                <span className={cn('text-xs font-medium', isAvailable ? colors.text : 'text-gray-600')}>
+                <span className={cn('text-xs font-medium', isAvailable ? colors.text : 'text-brainrot-peach/60')}>
                   {slot.label}
                 </span>
               )}
@@ -187,21 +187,21 @@ export function ImagePositionGrid({
       <div className="mt-4 flex flex-wrap justify-center gap-4 text-xs">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded bg-green-500/40 border border-green-500" />
-          <span className="text-gray-400">Small (300px)</span>
+          <span className="text-brainrot-brown/60">Small (300px)</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded bg-blue-500/40 border border-blue-500" />
-          <span className="text-gray-400">Medium (540px)</span>
+          <span className="text-brainrot-brown/60">Medium (540px)</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded bg-purple-500/40 border border-purple-500" />
-          <span className="text-gray-400">Large (800px)</span>
+          <span className="text-brainrot-brown/60">Large (800px)</span>
         </div>
       </div>
 
       {/* Instructions */}
       {interactive && selectedSize && (
-        <p className="mt-3 text-center text-xs text-gray-500">
+        <p className="mt-3 text-center text-xs text-brainrot-brown/50">
           Click a highlighted position to place your {selectedSize} image
         </p>
       )}

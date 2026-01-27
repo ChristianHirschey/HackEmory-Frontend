@@ -49,10 +49,10 @@ export function CreateStepIndicator({ currentStep, className }: CreateStepIndica
                   <div
                     className={cn(
                       'flex h-8 w-8 items-center justify-center rounded-full transition-colors',
-                      status === 'complete' && 'bg-green-600',
-                      status === 'current' && 'bg-indigo-600',
-                      status === 'pending' && 'bg-gray-700',
-                      status === 'error' && 'bg-red-600'
+                      status === 'complete' && 'bg-green-500',
+                      status === 'current' && 'bg-brainrot-coral',
+                      status === 'pending' && 'bg-brainrot-peach border border-brainrot-orange/30',
+                      status === 'error' && 'bg-red-500'
                     )}
                   >
                     {status === 'complete' ? (
@@ -60,7 +60,7 @@ export function CreateStepIndicator({ currentStep, className }: CreateStepIndica
                     ) : status === 'current' ? (
                       <Loader2 className="h-5 w-5 text-white animate-spin" />
                     ) : (
-                      <Circle className="h-5 w-5 text-gray-400" />
+                      <Circle className="h-5 w-5 text-brainrot-brown/40" />
                     )}
                   </div>
 
@@ -68,10 +68,10 @@ export function CreateStepIndicator({ currentStep, className }: CreateStepIndica
                   <span
                     className={cn(
                       'mt-2 text-xs font-medium hidden md:block',
-                      status === 'complete' && 'text-green-400',
-                      status === 'current' && 'text-indigo-400',
-                      status === 'pending' && 'text-gray-500',
-                      status === 'error' && 'text-red-400'
+                      status === 'complete' && 'text-green-600',
+                      status === 'current' && 'text-brainrot-coral',
+                      status === 'pending' && 'text-brainrot-brown/50',
+                      status === 'error' && 'text-red-500'
                     )}
                   >
                     {step.label}
@@ -83,7 +83,7 @@ export function CreateStepIndicator({ currentStep, className }: CreateStepIndica
                   <div
                     className={cn(
                       'mx-2 h-0.5 w-8 md:w-16 transition-colors',
-                      status === 'complete' ? 'bg-green-600' : 'bg-gray-700'
+                      status === 'complete' ? 'bg-green-500' : 'bg-brainrot-orange/30'
                     )}
                   />
                 )}

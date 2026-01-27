@@ -43,6 +43,12 @@ interface UseImageEditorMultiReturn {
   ) => void
   /** Remove image from images array */
   removeImageFromLine: (lineIdx: number, imageIdx: number) => void
+  /** Span an image from one line to another (adds image to all lines in range) */
+  spanImageToLines: (
+    sourceLineIdx: number,
+    imageIdx: number,
+    targetLineIdx: number
+  ) => void
   /** Update caption text */
   updateCaption: (lineIdx: number, caption: string) => void
   /** Get preview URL for a filename */
@@ -160,20 +166,9 @@ export function useImageEditorMulti(
           targetLine.images.push({ ...imageConfig })
         }
 
-        // Add to the current line
+        // Add to the current line only
+        // User can use "Show Until Line" feature to span images across multiple lines
         addImageToDialogueLine(line)
-
-        // Auto-add to subsequent "continued" lines (same speaker/emotion)
-        // This handles split dialogue lines
-        for (let i = lineIdx + 1; i < dialogue.length; i++) {
-          const nextLine = dialogue[i]
-          if (nextLine.speaker === line.speaker && nextLine.emotion === line.emotion) {
-            addImageToDialogueLine(nextLine)
-          } else {
-            // Stop when we hit a different speaker/emotion
-            break
-          }
-        }
 
         // Track file
         newFiles.set(filename, file)
@@ -256,6 +251,62 @@ export function useImageEditorMulti(
       return { ...prevState, transcript: newTranscript }
     })
   }, [])
+
+  /**
+   * Span an image from sourceLineIdx to targetLineIdx.
+   * Adds the image to all lines in the range (sourceLineIdx+1 to targetLineIdx).
+   * If targetLineIdx equals sourceLineIdx, removes the image from subsequent lines.
+   */
+  const spanImageToLines = useCallback(
+    (sourceLineIdx: number, imageIdx: number, targetLineIdx: number) => {
+      setState(prevState => {
+        const newTranscript = deepClone(prevState.transcript)
+        const dialogue = newTranscript.dialogue?.dialogue
+        if (!dialogue) return prevState
+
+        const sourceLine = dialogue[sourceLineIdx]
+        if (!sourceLine?.images?.[imageIdx]) {
+          console.error(`No image at line ${sourceLineIdx}, index ${imageIdx}`)
+          return prevState
+        }
+
+        const imageConfig = sourceLine.images[imageIdx]
+        const filename = imageConfig.filename
+
+        // First, remove this image from all lines after sourceLineIdx
+        // (to handle the case where targetLineIdx is reduced)
+        for (let i = sourceLineIdx + 1; i < dialogue.length; i++) {
+          const line = dialogue[i]
+          if (line.images) {
+            line.images = line.images.filter((img: ImageConfig) => img.filename !== filename)
+            if (line.images.length === 0) {
+              delete line.images
+            }
+          }
+        }
+
+        // Then add to lines from sourceLineIdx+1 to targetLineIdx
+        if (targetLineIdx > sourceLineIdx) {
+          for (let i = sourceLineIdx + 1; i <= targetLineIdx && i < dialogue.length; i++) {
+            const line = dialogue[i]
+            if (!line.images) {
+              line.images = []
+            }
+            // Migrate single image to images array if present
+            if (line.image) {
+              line.images.unshift(line.image)
+              delete line.image
+            }
+            // Add the spanning image (copy the config)
+            line.images.push({ ...imageConfig })
+          }
+        }
+
+        return { ...prevState, transcript: newTranscript }
+      })
+    },
+    []
+  )
 
   const updateCaption = useCallback(
     (lineIdx: number, caption: string) => {
@@ -370,6 +421,7 @@ export function useImageEditorMulti(
     addImageToLine,
     updateImageInLine,
     removeImageFromLine,
+    spanImageToLines,
     updateCaption,
     getPreviewUrl,
     getImageFiles,
